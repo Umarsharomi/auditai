@@ -1,0 +1,934 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AuditAI — Smart Contract Security Platform</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap');
+
+  :root {
+    --bg: #050A0E;
+    --surface: #0C1419;
+    --surface2: #111D24;
+    --border: #1A2A35;
+    --accent: #00FF88;
+    --accent2: #00C4FF;
+    --danger: #FF4560;
+    --warn: #FFB800;
+    --purple: #A855F7;
+    --text: #E0EEF5;
+    --muted: #4A6070;
+    --font-display: 'Syne', sans-serif;
+    --font-mono: 'Space Mono', monospace;
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:var(--bg); color:var(--text); font-family:var(--font-mono); min-height:100vh; overflow-x:hidden; }
+
+  body::before {
+    content:''; position:fixed; inset:0;
+    background-image: linear-gradient(rgba(0,255,136,0.025) 1px,transparent 1px), linear-gradient(90deg,rgba(0,255,136,0.025) 1px,transparent 1px);
+    background-size:40px 40px; pointer-events:none; z-index:0;
+  }
+
+  .container { max-width:1100px; margin:0 auto; padding:0 24px; position:relative; z-index:1; }
+
+  /* ── Header ── */
+  header { padding:24px 0 20px; border-bottom:1px solid var(--border); margin-bottom:32px; }
+  .header-inner { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; }
+  .logo { display:flex; align-items:center; gap:10px; }
+  .logo-icon { width:34px; height:34px; display:flex; align-items:center; justify-content:center; font-size:16px; color:var(--accent); clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%); background:rgba(0,255,136,0.08); border:1px solid rgba(0,255,136,0.3); }
+  .logo-text { font-family:var(--font-display); font-size:20px; font-weight:800; letter-spacing:-0.5px; }
+  .logo-text span { color:var(--accent); }
+  .header-right { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+  .hbtn { display:flex; align-items:center; gap:6px; padding:7px 14px; background:transparent; border:1px solid var(--border); color:var(--muted); font-family:var(--font-mono); font-size:10px; letter-spacing:1px; cursor:pointer; transition:all 0.2s; text-transform:uppercase; }
+  .hbtn:hover { border-color:var(--accent2); color:var(--accent2); }
+  .hbtn.connected { border-color:var(--accent); color:var(--accent); }
+  .wdot { width:6px; height:6px; border-radius:50%; background:var(--muted); transition:background 0.3s; }
+  .hbtn.connected .wdot { background:var(--accent); animation:pulse 2s infinite; }
+  .badge { font-size:9px; padding:3px 7px; border:1px solid var(--accent); color:var(--accent); letter-spacing:2px; text-transform:uppercase; }
+
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+  @keyframes spin { to{transform:rotate(360deg)} }
+  @keyframes fadeUp { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+
+  /* ── Nav Tabs ── */
+  .nav-tabs { display:flex; gap:2px; margin-bottom:32px; border-bottom:1px solid var(--border); overflow-x:auto; }
+  .nav-tab { padding:12px 20px; background:transparent; border:none; border-bottom:2px solid transparent; color:var(--muted); font-family:var(--font-mono); font-size:11px; letter-spacing:1px; cursor:pointer; transition:all 0.2s; text-transform:uppercase; white-space:nowrap; display:flex; align-items:center; gap:7px; }
+  .nav-tab:hover { color:var(--text); }
+  .nav-tab.active { color:var(--accent); border-bottom-color:var(--accent); }
+  .tab-icon { font-size:14px; }
+
+  /* ── Sections ── */
+  .section { display:none; animation:fadeUp 0.4s ease; }
+  .section.active { display:block; }
+
+  /* ── Panel ── */
+  .panel { background:var(--surface); border:1px solid var(--border); overflow:hidden; margin-bottom:2px; }
+  .panel-header { display:flex; align-items:center; justify-content:space-between; padding:11px 16px; border-bottom:1px solid var(--border); background:var(--surface2); }
+  .panel-title { font-size:10px; letter-spacing:2px; text-transform:uppercase; color:var(--muted); display:flex; align-items:center; gap:7px; }
+  .live-dot { width:5px; height:5px; border-radius:50%; background:var(--accent); animation:pulse 2s infinite; }
+  .dot-row { display:flex; gap:5px; }
+  .dot { width:9px; height:9px; border-radius:50%; }
+  .dot.r{background:#FF5F57} .dot.y{background:#FFBD2E} .dot.g{background:#28C840}
+
+  textarea, .code-area {
+    width:100%; min-height:260px; background:transparent; border:none; outline:none;
+    color:var(--accent2); font-family:var(--font-mono); font-size:12px; line-height:1.8;
+    padding:16px; resize:vertical; tab-size:2;
+  }
+  textarea::placeholder { color:var(--muted); }
+
+  .example-bar { padding:9px 16px; border-top:1px solid var(--border); display:flex; align-items:center; gap:7px; flex-wrap:wrap; }
+  .ex-label { font-size:10px; color:var(--muted); letter-spacing:1px; text-transform:uppercase; }
+  .ex-btn { font-family:var(--font-mono); font-size:10px; padding:3px 9px; background:transparent; border:1px solid var(--border); color:var(--muted); cursor:pointer; transition:all 0.2s; }
+  .ex-btn:hover { border-color:var(--accent); color:var(--accent); }
+
+  /* ── Buttons ── */
+  .run-btn { width:100%; padding:15px; background:var(--accent); color:var(--bg); border:none; font-family:var(--font-display); font-size:14px; font-weight:700; letter-spacing:1px; cursor:pointer; transition:all 0.2s; text-transform:uppercase; }
+  .run-btn:hover { background:#00e07a; transform:translateY(-1px); box-shadow:0 8px 24px rgba(0,255,136,0.25); }
+  .run-btn:disabled { background:var(--surface2); color:var(--muted); cursor:not-allowed; transform:none; box-shadow:none; }
+  .run-btn.blue { background:var(--accent2); }
+  .run-btn.blue:hover { background:#00aee0; box-shadow:0 8px 24px rgba(0,196,255,0.25); }
+  .run-btn.purple { background:var(--purple); }
+  .run-btn.purple:hover { background:#9333ea; box-shadow:0 8px 24px rgba(168,85,247,0.25); }
+
+  .btn-inner { display:flex; align-items:center; justify-content:center; gap:8px; }
+  .loader { display:none; align-items:center; gap:8px; }
+  .loader.active { display:flex; }
+  .spinner { width:13px; height:13px; border:2px solid var(--bg); border-top-color:transparent; border-radius:50%; animation:spin 0.6s linear infinite; }
+
+  .action-row { display:flex; gap:10px; flex-wrap:wrap; margin-top:16px; }
+  .action-btn { display:inline-flex; align-items:center; gap:6px; padding:9px 18px; background:transparent; border:1px solid var(--border); color:var(--muted); font-family:var(--font-mono); font-size:10px; letter-spacing:1px; cursor:pointer; transition:all 0.2s; text-transform:uppercase; }
+  .action-btn:hover { border-color:var(--accent); color:var(--accent); }
+  .action-btn.primary { border-color:var(--accent2); color:var(--accent2); }
+
+  /* ── Results ── */
+  .results { display:none; margin-top:24px; }
+  .results.visible { display:block; animation:fadeUp 0.4s ease; }
+
+  .score-card { background:var(--surface); border:1px solid var(--border); padding:24px; margin-bottom:18px; display:flex; align-items:center; gap:24px; flex-wrap:wrap; }
+  .score-circle { width:90px; height:90px; border-radius:50%; display:flex; flex-direction:column; align-items:center; justify-content:center; border:3px solid; flex-shrink:0; }
+  .score-circle.high{border-color:var(--accent);color:var(--accent)}
+  .score-circle.medium{border-color:var(--warn);color:var(--warn)}
+  .score-circle.low{border-color:var(--danger);color:var(--danger)}
+  .score-num { font-family:var(--font-display); font-size:28px; font-weight:800; line-height:1; }
+  .score-lbl { font-size:9px; letter-spacing:2px; text-transform:uppercase; margin-top:2px; }
+  .score-info { flex:1; min-width:180px; }
+  .score-title { font-family:var(--font-display); font-size:18px; font-weight:700; margin-bottom:5px; }
+  .score-summary { color:var(--muted); font-size:12px; line-height:1.8; }
+  .pills { display:flex; gap:8px; margin-top:12px; flex-wrap:wrap; }
+  .pill { font-size:10px; padding:3px 9px; letter-spacing:1px; text-transform:uppercase; border:1px solid; }
+  .pill.critical{border-color:var(--danger);color:var(--danger);background:rgba(255,69,96,0.08)}
+  .pill.high{border-color:var(--warn);color:var(--warn);background:rgba(255,184,0,0.08)}
+  .pill.medium{border-color:var(--accent2);color:var(--accent2);background:rgba(0,196,255,0.08)}
+  .pill.low{border-color:var(--muted);color:var(--muted)}
+  .pill.safe{border-color:var(--accent);color:var(--accent);background:rgba(0,255,136,0.08)}
+
+  .share-bar { display:flex; align-items:center; gap:8px; padding:10px 14px; background:var(--surface2); border:1px solid var(--border); margin-bottom:16px; flex-wrap:wrap; }
+  .share-lbl { font-size:10px; color:var(--muted); letter-spacing:1px; text-transform:uppercase; white-space:nowrap; }
+  .share-input { flex:1; min-width:100px; background:var(--bg); border:1px solid var(--border); color:var(--accent2); font-family:var(--font-mono); font-size:10px; padding:5px 9px; outline:none; }
+  .copy-btn { padding:5px 12px; background:transparent; border:1px solid var(--accent); color:var(--accent); font-family:var(--font-mono); font-size:10px; letter-spacing:1px; cursor:pointer; transition:all 0.2s; text-transform:uppercase; white-space:nowrap; }
+  .copy-btn:hover{background:rgba(0,255,136,0.1)}
+  .copy-btn.copied{border-color:var(--accent2);color:var(--accent2)}
+
+  .stats-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:12px; margin-bottom:18px; }
+  .stat-card { background:var(--surface); border:1px solid var(--border); padding:14px; }
+  .stat-card-title { font-size:10px; letter-spacing:2px; text-transform:uppercase; color:var(--muted); margin-bottom:5px; }
+  .stat-card-val { font-family:var(--font-display); font-size:18px; font-weight:700; color:var(--accent); }
+
+  .findings-grid { display:grid; gap:12px; margin-bottom:18px; }
+  .finding { background:var(--surface); border:1px solid var(--border); border-left:3px solid; padding:16px; transition:transform 0.2s; }
+  .finding:hover{transform:translateX(3px)}
+  .finding.critical{border-left-color:var(--danger)}
+  .finding.high{border-left-color:var(--warn)}
+  .finding.medium{border-left-color:var(--accent2)}
+  .finding.low{border-left-color:var(--muted)}
+  .finding-hdr { display:flex; align-items:center; gap:9px; margin-bottom:7px; flex-wrap:wrap; }
+  .f-sev { font-size:9px; padding:2px 6px; letter-spacing:2px; text-transform:uppercase; border:1px solid currentColor; }
+  .finding.critical .f-sev{color:var(--danger)}
+  .finding.high .f-sev{color:var(--warn)}
+  .finding.medium .f-sev{color:var(--accent2)}
+  .finding.low .f-sev{color:var(--muted)}
+  .f-title { font-family:var(--font-display); font-size:13px; font-weight:700; }
+  .f-desc { color:var(--muted); font-size:11px; line-height:1.8; margin-bottom:9px; }
+  .f-rec { background:var(--surface2); border:1px solid var(--border); padding:9px 12px; font-size:11px; color:var(--accent); line-height:1.8; }
+  .f-rec::before { content:'→ FIX: '; opacity:0.6; }
+
+  /* ── Token Analyzer ── */
+  .token-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:12px; margin-bottom:18px; }
+  .token-card { background:var(--surface); border:1px solid var(--border); padding:18px; }
+  .token-card-title { font-size:10px; letter-spacing:2px; text-transform:uppercase; color:var(--muted); margin-bottom:8px; }
+  .token-card-val { font-family:var(--font-display); font-size:22px; font-weight:800; }
+  .token-card-val.safe{color:var(--accent)}
+  .token-card-val.warn{color:var(--warn)}
+  .token-card-val.danger{color:var(--danger)}
+  .token-card-sub { font-size:11px; color:var(--muted); margin-top:4px; }
+
+  .risk-bar-wrap { background:var(--surface); border:1px solid var(--border); padding:20px; margin-bottom:18px; }
+  .risk-bar-title { font-size:10px; letter-spacing:2px; text-transform:uppercase; color:var(--muted); margin-bottom:14px; }
+  .risk-row { display:flex; align-items:center; gap:12px; margin-bottom:10px; }
+  .risk-label { font-size:11px; color:var(--muted); width:120px; flex-shrink:0; }
+  .risk-track { flex:1; height:6px; background:var(--border); border-radius:0; overflow:hidden; }
+  .risk-fill { height:100%; transition:width 0.8s ease; border-radius:0; }
+  .risk-fill.low-r{background:var(--accent)}
+  .risk-fill.med-r{background:var(--warn)}
+  .risk-fill.high-r{background:var(--danger)}
+  .risk-pct { font-size:11px; font-family:var(--font-display); font-weight:700; width:36px; text-align:right; }
+
+  /* ── Compare ── */
+  .compare-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  @media(max-width:700px){.compare-grid{grid-template-columns:1fr}}
+  .diff-section { background:var(--surface); border:1px solid var(--border); padding:18px; margin-bottom:16px; }
+  .diff-title { font-family:var(--font-display); font-size:14px; font-weight:700; margin-bottom:12px; display:flex; align-items:center; gap:8px; }
+  .diff-badge { font-size:9px; padding:2px 7px; border:1px solid; letter-spacing:1px; text-transform:uppercase; }
+  .diff-badge.a{border-color:var(--accent2);color:var(--accent2)}
+  .diff-badge.b{border-color:var(--purple);color:var(--purple)}
+  .diff-badge.both{border-color:var(--warn);color:var(--warn)}
+  .diff-item { padding:8px 12px; margin-bottom:6px; font-size:11px; line-height:1.7; border-left:3px solid; }
+  .diff-item.only-a{border-left-color:var(--accent2);background:rgba(0,196,255,0.05)}
+  .diff-item.only-b{border-left-color:var(--purple);background:rgba(168,85,247,0.05)}
+  .diff-item.shared{border-left-color:var(--warn);background:rgba(255,184,0,0.05)}
+  .winner-banner { background:var(--surface2); border:1px solid var(--accent); padding:16px 20px; margin-bottom:18px; display:flex; align-items:center; gap:14px; }
+  .winner-label { font-size:10px; color:var(--muted); letter-spacing:2px; text-transform:uppercase; }
+  .winner-name { font-family:var(--font-display); font-size:20px; font-weight:800; color:var(--accent); }
+
+  /* ── Fix Suggester ── */
+  .fix-output { background:var(--surface); border:1px solid var(--border); }
+  .fix-code { padding:18px; font-family:var(--font-mono); font-size:12px; line-height:1.8; color:var(--accent); white-space:pre-wrap; overflow-x:auto; max-height:500px; overflow-y:auto; }
+  .fix-changes { display:grid; gap:10px; margin-bottom:18px; }
+  .fix-change { background:var(--surface); border:1px solid var(--border); border-left:3px solid var(--accent); padding:14px; }
+  .fix-change-title { font-family:var(--font-display); font-size:13px; font-weight:700; margin-bottom:5px; color:var(--accent); }
+  .fix-change-desc { font-size:11px; color:var(--muted); line-height:1.8; }
+
+  /* ── Leaderboard ── */
+  .lb-header { display:grid; grid-template-columns:40px 1fr 80px 100px 80px; gap:12px; padding:10px 16px; background:var(--surface2); border:1px solid var(--border); font-size:10px; letter-spacing:2px; text-transform:uppercase; color:var(--muted); margin-bottom:2px; }
+  .lb-row { display:grid; grid-template-columns:40px 1fr 80px 100px 80px; gap:12px; padding:14px 16px; background:var(--surface); border:1px solid var(--border); margin-bottom:2px; transition:all 0.2s; align-items:center; }
+  .lb-row:hover{border-color:var(--border);transform:translateX(3px)}
+  .lb-rank { font-family:var(--font-display); font-size:16px; font-weight:800; color:var(--muted); }
+  .lb-rank.gold{color:#FFD700}
+  .lb-rank.silver{color:#C0C0C0}
+  .lb-rank.bronze{color:#CD7F32}
+  .lb-contract { font-size:11px; }
+  .lb-contract-name { font-family:var(--font-display); font-size:13px; font-weight:700; margin-bottom:2px; }
+  .lb-contract-date { font-size:10px; color:var(--muted); }
+  .lb-score { font-family:var(--font-display); font-size:18px; font-weight:800; }
+  .lb-score.high{color:var(--accent)}
+  .lb-score.medium{color:var(--warn)}
+  .lb-score.low{color:var(--danger)}
+  .lb-verdict { font-size:10px; letter-spacing:1px; text-transform:uppercase; }
+  .lb-issues { font-family:var(--font-display); font-size:16px; font-weight:700; color:var(--muted); }
+  .lb-issues.zero{color:var(--accent)}
+  .lb-tabs { display:flex; gap:2px; margin-bottom:16px; }
+  .lb-tab { padding:8px 16px; background:transparent; border:1px solid var(--border); color:var(--muted); font-family:var(--font-mono); font-size:10px; letter-spacing:1px; cursor:pointer; transition:all 0.2s; text-transform:uppercase; }
+  .lb-tab.active{border-color:var(--accent);color:var(--accent)}
+  .lb-empty { text-align:center; padding:48px; color:var(--muted); font-size:12px; line-height:2; }
+  .submit-lb-btn { padding:9px 18px; background:transparent; border:1px solid var(--accent); color:var(--accent); font-family:var(--font-mono); font-size:10px; letter-spacing:1px; cursor:pointer; transition:all 0.2s; text-transform:uppercase; }
+  .submit-lb-btn:hover{background:rgba(0,255,136,0.1)}
+
+  /* ── History Drawer ── */
+  .drawer-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:100; backdrop-filter:blur(4px); }
+  .drawer-overlay.open{display:block}
+  .drawer { position:fixed; top:0; right:-440px; bottom:0; width:420px; background:var(--surface); border-left:1px solid var(--border); z-index:101; transition:right 0.3s ease; display:flex; flex-direction:column; }
+  .drawer.open{right:0}
+  .drawer-hdr { display:flex; align-items:center; justify-content:space-between; padding:18px 22px; border-bottom:1px solid var(--border); background:var(--surface2); flex-shrink:0; }
+  .drawer-title { font-family:var(--font-display); font-size:15px; font-weight:700; }
+  .drawer-close { background:transparent; border:1px solid var(--border); color:var(--muted); width:30px; height:30px; cursor:pointer; font-size:14px; transition:all 0.2s; display:flex; align-items:center; justify-content:center; }
+  .drawer-close:hover{border-color:var(--danger);color:var(--danger)}
+  .drawer-body { flex:1; overflow-y:auto; padding:14px; }
+  .h-empty { text-align:center; padding:48px 20px; color:var(--muted); font-size:12px; line-height:2; }
+  .h-item { background:var(--surface2); border:1px solid var(--border); padding:12px 14px; margin-bottom:8px; cursor:pointer; transition:all 0.2s; }
+  .h-item:hover{border-color:var(--accent2);transform:translateX(-3px)}
+  .h-item-top { display:flex; align-items:center; justify-content:space-between; margin-bottom:5px; }
+  .h-score { font-family:var(--font-display); font-size:16px; font-weight:800; }
+  .h-score.high{color:var(--accent)} .h-score.medium{color:var(--warn)} .h-score.low{color:var(--danger)}
+  .h-date { font-size:10px; color:var(--muted); }
+  .h-verdict { font-size:10px; letter-spacing:1px; text-transform:uppercase; margin-bottom:3px; }
+  .h-snippet { font-size:10px; color:var(--muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .h-del { float:right; background:transparent; border:none; color:var(--muted); cursor:pointer; font-size:11px; padding:1px 5px; transition:color 0.2s; }
+  .h-del:hover{color:var(--danger)}
+  .drawer-footer { padding:12px 22px; border-top:1px solid var(--border); background:var(--surface2); flex-shrink:0; }
+  .clear-btn { width:100%; padding:8px; background:transparent; border:1px solid var(--border); color:var(--muted); font-family:var(--font-mono); font-size:10px; letter-spacing:1px; cursor:pointer; transition:all 0.2s; text-transform:uppercase; }
+  .clear-btn:hover{border-color:var(--danger);color:var(--danger)}
+
+  /* ── Toast ── */
+  .toast { position:fixed; bottom:28px; left:50%; transform:translateX(-50%) translateY(16px); background:var(--surface2); border:1px solid var(--accent); color:var(--accent); font-size:11px; letter-spacing:1px; padding:9px 18px; opacity:0; transition:all 0.3s; z-index:200; pointer-events:none; white-space:nowrap; }
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+  .error-box { display:none; padding:12px 16px; border:1px solid var(--danger); background:rgba(255,69,96,0.08); color:var(--danger); font-size:11px; margin-top:12px; }
+  .error-box.visible{display:block}
+
+  footer { margin-top:60px; padding:24px 0; border-top:1px solid var(--border); text-align:center; color:var(--muted); font-size:10px; letter-spacing:1px; }
+
+  ::-webkit-scrollbar{width:4px} ::-webkit-scrollbar-track{background:var(--bg)} ::-webkit-scrollbar-thumb{background:var(--border)}
+
+  @media(max-width:600px){
+    .lb-header,.lb-row{grid-template-columns:32px 1fr 60px 80px}
+    .lb-issues{display:none}
+    .drawer{width:100%;right:-100%}
+  }
+</style>
+</head>
+<body>
+
+<div class="drawer-overlay" id="drawerOverlay" onclick="closeHistory()"></div>
+<div class="drawer" id="historyDrawer">
+  <div class="drawer-hdr">
+    <div class="drawer-title">Audit History</div>
+    <button class="drawer-close" onclick="closeHistory()">✕</button>
+  </div>
+  <div class="drawer-body" id="historyBody"></div>
+  <div class="drawer-footer"><button class="clear-btn" onclick="clearHistory()">Clear All History</button></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<div class="container">
+  <header>
+    <div class="header-inner">
+      <div class="logo">
+        <div class="logo-icon">⬡</div>
+        <div class="logo-text">Audit<span>AI</span></div>
+      </div>
+      <div class="header-right">
+        <button class="hbtn" onclick="openHistory()">☰ History <span id="histCount" style="color:var(--accent)"></span></button>
+        <button class="hbtn" id="walletBtn" onclick="connectWallet()">
+          <div class="wdot" id="wdot"></div>
+          <span id="wLabel">Connect Wallet</span>
+        </button>
+        <div class="badge">v0.3</div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Nav Tabs -->
+  <nav class="nav-tabs">
+    <button class="nav-tab active" onclick="switchTab('audit')"><span class="tab-icon">🔍</span> Security Audit</button>
+    <button class="nav-tab" onclick="switchTab('token')"><span class="tab-icon">🪙</span> Token Analyzer</button>
+    <button class="nav-tab" onclick="switchTab('compare')"><span class="tab-icon">⚖️</span> Compare</button>
+    <button class="nav-tab" onclick="switchTab('fix')"><span class="tab-icon">🔧</span> Fix Suggester</button>
+    <button class="nav-tab" onclick="switchTab('leaderboard')"><span class="tab-icon">🏆</span> Leaderboard</button>
+  </nav>
+
+  <!-- ── AUDIT TAB ── -->
+  <div class="section active" id="tab-audit">
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title"><span class="live-dot"></span> Solidity Contract</div>
+        <div class="dot-row"><div class="dot r"></div><div class="dot y"></div><div class="dot g"></div></div>
+      </div>
+      <textarea id="auditCode" placeholder="// Paste your Solidity contract here..."></textarea>
+      <div class="example-bar">
+        <span class="ex-label">Examples:</span>
+        <button class="ex-btn" onclick="loadEx('auditCode','erc20')">ERC20</button>
+        <button class="ex-btn" onclick="loadEx('auditCode','reentrancy')">Reentrancy</button>
+        <button class="ex-btn" onclick="loadEx('auditCode','vault')">CryptoVault</button>
+      </div>
+    </div>
+    <button class="run-btn" id="auditBtn" onclick="runAudit()">
+      <div class="btn-inner" id="auditBtnText">⬡ Run Security Audit</div>
+      <div class="loader" id="auditLoader"><div class="spinner"></div> Analyzing...</div>
+    </button>
+    <div class="error-box" id="auditError"></div>
+    <div class="results" id="auditResults">
+      <div class="score-card" id="auditScoreCard"></div>
+      <div class="share-bar">
+        <span class="share-lbl">Share:</span>
+        <input class="share-input" id="auditShareLink" readonly />
+        <button class="copy-btn" id="auditCopyBtn" onclick="copyLink('auditShareLink','auditCopyBtn')">Copy</button>
+      </div>
+      <div class="stats-grid" id="auditStatsGrid"></div>
+      <div class="panel-header" style="margin-bottom:12px;background:var(--surface);border:1px solid var(--border)">
+        <div class="panel-title">Findings</div>
+      </div>
+      <div class="findings-grid" id="auditFindings"></div>
+      <div class="action-row">
+        <button class="action-btn primary" onclick="downloadReport()">↓ Download Report</button>
+        <button class="action-btn" onclick="submitToLeaderboard()">🏆 Submit to Leaderboard</button>
+        <button class="action-btn" onclick="sendToFix()">🔧 Fix This Contract</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── TOKEN ANALYZER TAB ── -->
+  <div class="section" id="tab-token">
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title"><span class="live-dot"></span> Token Contract</div>
+        <div class="dot-row"><div class="dot r"></div><div class="dot y"></div><div class="dot g"></div></div>
+      </div>
+      <textarea id="tokenCode" placeholder="// Paste your token contract here to detect honeypots, rugpulls, hidden taxes..."></textarea>
+      <div class="example-bar">
+        <span class="ex-label">Examples:</span>
+        <button class="ex-btn" onclick="loadEx('tokenCode','erc20')">Clean Token</button>
+        <button class="ex-btn" onclick="loadEx('tokenCode','honeypot')">Honeypot</button>
+      </div>
+    </div>
+    <button class="run-btn blue" id="tokenBtn" onclick="runTokenAnalysis()">
+      <div class="btn-inner" id="tokenBtnText">🪙 Analyze Token</div>
+      <div class="loader" id="tokenLoader"><div class="spinner" style="border-color:var(--bg);border-top-color:transparent"></div> Scanning...</div>
+    </button>
+    <div class="error-box" id="tokenError"></div>
+    <div class="results" id="tokenResults">
+      <div class="token-grid" id="tokenCards"></div>
+      <div class="risk-bar-wrap">
+        <div class="risk-bar-title">Risk Breakdown</div>
+        <div id="riskBars"></div>
+      </div>
+      <div class="findings-grid" id="tokenFindings"></div>
+    </div>
+  </div>
+
+  <!-- ── COMPARE TAB ── -->
+  <div class="section" id="tab-compare">
+    <div class="compare-grid">
+      <div>
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title" style="color:var(--accent2)">Contract A</div>
+            <div class="dot-row"><div class="dot r"></div><div class="dot y"></div><div class="dot g"></div></div>
+          </div>
+          <textarea id="compareA" placeholder="// Paste Contract A here..."></textarea>
+        </div>
+      </div>
+      <div>
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title" style="color:var(--purple)">Contract B</div>
+            <div class="dot-row"><div class="dot r"></div><div class="dot y"></div><div class="dot g"></div></div>
+          </div>
+          <textarea id="compareB" placeholder="// Paste Contract B here..."></textarea>
+        </div>
+      </div>
+    </div>
+    <button class="run-btn" style="background:var(--purple)" id="compareBtn" onclick="runCompare()">
+      <div class="btn-inner" id="compareBtnText">⚖️ Compare Contracts</div>
+      <div class="loader" id="compareLoader"><div class="spinner" style="border-color:var(--bg);border-top-color:transparent"></div> Comparing...</div>
+    </button>
+    <div class="error-box" id="compareError"></div>
+    <div class="results" id="compareResults">
+      <div class="winner-banner" id="winnerBanner"></div>
+      <div id="compareContent"></div>
+    </div>
+  </div>
+
+  <!-- ── FIX SUGGESTER TAB ── -->
+  <div class="section" id="tab-fix">
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title"><span class="live-dot"></span> Vulnerable Contract</div>
+        <div class="dot-row"><div class="dot r"></div><div class="dot y"></div><div class="dot g"></div></div>
+      </div>
+      <textarea id="fixCode" placeholder="// Paste your vulnerable contract here and AuditAI will generate a fixed version..."></textarea>
+      <div class="example-bar">
+        <span class="ex-label">Examples:</span>
+        <button class="ex-btn" onclick="loadEx('fixCode','reentrancy')">Reentrancy Bug</button>
+        <button class="ex-btn" onclick="loadEx('fixCode','vault')">CryptoVault</button>
+      </div>
+    </div>
+    <button class="run-btn" style="background:var(--warn);color:var(--bg)" id="fixBtn" onclick="runFix()">
+      <div class="btn-inner" id="fixBtnText">🔧 Generate Fixed Contract</div>
+      <div class="loader" id="fixLoader"><div class="spinner" style="border-color:var(--bg);border-top-color:transparent"></div> Generating fix...</div>
+    </button>
+    <div class="error-box" id="fixError"></div>
+    <div class="results" id="fixResults">
+      <div class="panel-header" style="margin-bottom:12px;background:var(--surface);border:1px solid var(--border)">
+        <div class="panel-title">Changes Made</div>
+      </div>
+      <div class="fix-changes" id="fixChanges"></div>
+      <div class="panel-header" style="margin-bottom:0;background:var(--surface);border:1px solid var(--border)">
+        <div class="panel-title">Fixed Contract</div>
+        <button class="copy-btn" onclick="copyFixedCode()">Copy Code</button>
+      </div>
+      <div class="fix-output panel">
+        <div class="fix-code" id="fixOutput"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── LEADERBOARD TAB ── -->
+  <div class="section" id="tab-leaderboard">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px">
+      <div class="lb-tabs">
+        <button class="lb-tab active" onclick="switchLbTab('shame')">😱 Hall of Shame</button>
+        <button class="lb-tab" onclick="switchLbTab('fame')">🏆 Hall of Fame</button>
+      </div>
+      <button class="submit-lb-btn" onclick="switchTab('audit')">+ Submit Audit</button>
+    </div>
+    <div class="lb-header">
+      <div>#</div><div>Contract</div><div>Score</div><div>Verdict</div><div>Issues</div>
+    </div>
+    <div id="lbContent"></div>
+  </div>
+
+</div>
+
+<footer><div class="container">AuditAI v0.3 — Smart Contract Security Platform &nbsp;·&nbsp; AI-powered, not a replacement for professional audits &nbsp;·&nbsp; Free forever</div></footer>
+
+<script>
+// ─── Contract examples ─────────────────────────────
+const EXAMPLES = {
+  erc20:`// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
+contract SimpleToken {
+    string public name = "SimpleToken";
+    string public symbol = "STK";
+    uint256 public totalSupply;
+    mapping(address => uint256) public balanceOf;
+    address public owner;
+    constructor(uint256 _supply) { owner = msg.sender; totalSupply = _supply; balanceOf[msg.sender] = _supply; }
+    function transfer(address to, uint256 amount) public returns (bool) {
+        require(balanceOf[msg.sender] >= amount);
+        balanceOf[msg.sender] -= amount; balanceOf[to] += amount; return true;
+    }
+    function mint(uint256 amount) public { totalSupply += amount; balanceOf[msg.sender] += amount; } // No access control!
+}`,
+  reentrancy:`// SPDX-License-Identifier: MIT
+pragma solidity ^0.6.0;
+contract VulnerableBank {
+    mapping(address => uint256) public balances;
+    function deposit() public payable { balances[msg.sender] += msg.value; }
+    function withdraw() public {
+        uint256 amount = balances[msg.sender];
+        require(amount > 0);
+        (bool success, ) = msg.sender.call{value: amount}("");
+        require(success);
+        balances[msg.sender] = 0; // reentrancy!
+    }
+}`,
+  vault:`// SPDX-License-Identifier: MIT
+pragma solidity ^0.6.0;
+contract CryptoVault {
+    address public owner;
+    mapping(address => uint256) public balances;
+    mapping(address => bool) public whitelisted;
+    constructor() public { owner = msg.sender; }
+    modifier onlyOwner() { require(tx.origin == owner); _; }
+    function deposit() public payable { balances[msg.sender] += msg.value; }
+    function withdraw(uint256 amount) public {
+        require(balances[msg.sender] >= amount);
+        (bool success, ) = msg.sender.call{value: amount}("");
+        require(success);
+        balances[msg.sender] -= amount;
+    }
+    function batchAirdrop(address[] memory r, uint256 amount) public onlyOwner {
+        uint256 total = r.length * amount;
+        for(uint i=0;i<r.length;i++) payable(r[i]).transfer(amount);
+    }
+    function setWhitelist(address user, bool s) public { whitelisted[user] = s; }
+    function emergencyWithdraw() public onlyOwner { selfdestruct(payable(owner)); }
+}`,
+  honeypot:`// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
+contract HoneypotToken {
+    mapping(address => uint256) public balanceOf;
+    mapping(address => bool) private _blacklisted;
+    address private _owner;
+    uint256 public buyTax = 5;
+    uint256 public sellTax = 95; // hidden 95% sell tax!
+    constructor() { _owner = msg.sender; balanceOf[msg.sender] = 1000000e18; }
+    function transfer(address to, uint256 amount) public returns (bool) {
+        require(!_blacklisted[msg.sender], "Blacklisted");
+        uint256 tax = amount * sellTax / 100;
+        balanceOf[msg.sender] -= amount;
+        balanceOf[to] += amount - tax;
+        balanceOf[_owner] += tax;
+        return true;
+    }
+    function blacklist(address user) public { require(msg.sender == _owner); _blacklisted[user] = true; }
+    function setTax(uint256 buy, uint256 sell) public { require(msg.sender == _owner); buyTax = buy; sellTax = sell; }
+}`
+};
+
+function loadEx(id, type) { document.getElementById(id).value = EXAMPLES[type] || ''; }
+
+// ─── Tab switching ──────────────────────────────────
+function switchTab(name) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  const tabs = ['audit','token','compare','fix','leaderboard'];
+  const idx = tabs.indexOf(name);
+  document.querySelectorAll('.nav-tab')[idx].classList.add('active');
+  if (name === 'leaderboard') renderLeaderboard('shame');
+}
+
+// ─── Storage ────────────────────────────────────────
+function getHistory() { try { return JSON.parse(localStorage.getItem('auditHistory') || '[]'); } catch { return []; } }
+function saveHistory(h) { try { localStorage.setItem('auditHistory', JSON.stringify(h.slice(0,50))); } catch {} }
+function updateHistCount() {
+  const h = getHistory();
+  document.getElementById('histCount').textContent = h.length > 0 ? `(${h.length})` : '';
+}
+
+// ─── Wallet ─────────────────────────────────────────
+let walletAddr = null;
+async function connectWallet() {
+  if (walletAddr) {
+    walletAddr = null;
+    document.getElementById('walletBtn').classList.remove('connected');
+    document.getElementById('wLabel').textContent = 'Connect Wallet';
+    showToast('Wallet disconnected'); return;
+  }
+  if (!window.ethereum) { showToast('MetaMask not detected'); return; }
+  try {
+    const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+    walletAddr = accounts[0];
+    const short = walletAddr.slice(0,6) + '...' + walletAddr.slice(-4);
+    document.getElementById('walletBtn').classList.add('connected');
+    document.getElementById('wLabel').textContent = short;
+    showToast('Wallet connected: ' + short);
+  } catch { showToast('Connection rejected'); }
+}
+
+// ─── API call (proxied) ──────────────────────────────
+async function callAI(prompt) {
+  const response = await fetch('/api/audit', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ prompt })
+  });
+  const data = await response.json();
+  if (data.error) throw new Error(data.error);
+  return data;
+}
+
+function setLoading(btnId, textId, loaderId, loading) {
+  const btn = document.getElementById(btnId);
+  btn.disabled = loading;
+  document.getElementById(textId).style.display = loading ? 'none' : 'flex';
+  const l = document.getElementById(loaderId);
+  loading ? l.classList.add('active') : l.classList.remove('active');
+}
+
+// ─── SECURITY AUDIT ─────────────────────────────────
+let lastAudit = null, lastAuditId = null;
+
+async function runAudit() {
+  const code = document.getElementById('auditCode').value.trim();
+  if (!code) { showErr('auditError','Paste a contract first'); return; }
+  setLoading('auditBtn','auditBtnText','auditLoader',true);
+  document.getElementById('auditError').classList.remove('visible');
+  document.getElementById('auditResults').classList.remove('visible');
+  try {
+    const audit = await callAI(`You are a senior smart contract security auditor. Analyze this Solidity contract and return ONLY valid JSON, no markdown, no backticks.
+Contract:
+${code}
+JSON format:
+{"score":<0-100>,"verdict":"<SECURE|MODERATE RISK|HIGH RISK|CRITICAL>","summary":"<2 sentences>","findings":[{"severity":"<CRITICAL|HIGH|MEDIUM|LOW>","title":"<name>","description":"<what/where>","recommendation":"<fix>"}],"stats":{"lines":<n>,"functions":<n>,"checks_performed":<n>,"audit_time":"<Xs>"}}`);
+    lastAudit = audit; lastAuditId = 'audit_' + Date.now();
+    const h = getHistory();
+    h.unshift({ id:lastAuditId, date:new Date().toISOString(), score:audit.score, verdict:audit.verdict, summary:audit.summary, findings:audit.findings, stats:audit.stats, codeSnippet:code.slice(0,80)+'...', wallet:walletAddr });
+    saveHistory(h); updateHistCount();
+    renderAuditResults(audit, lastAuditId);
+  } catch(e) { showErr('auditError', e.message); }
+  finally { setLoading('auditBtn','auditBtnText','auditLoader',false); }
+}
+
+function renderAuditResults(audit, id) {
+  const sc = audit.score >= 70 ? 'high' : audit.score >= 40 ? 'medium' : 'low';
+  const vc = audit.verdict === 'SECURE' ? 'var(--accent)' : audit.verdict === 'MODERATE RISK' ? 'var(--warn)' : 'var(--danger)';
+  const cnt = s => audit.findings.filter(f=>f.severity===s).length;
+  document.getElementById('auditScoreCard').innerHTML = `
+    <div class="score-circle ${sc}"><div class="score-num">${audit.score}</div><div class="score-lbl">/100</div></div>
+    <div class="score-info">
+      <div class="score-title" style="color:${vc}">${audit.verdict}</div>
+      <div class="score-summary">${audit.summary}</div>
+      <div class="pills">
+        ${cnt('CRITICAL')>0?`<span class="pill critical">${cnt('CRITICAL')} Critical</span>`:''}
+        ${cnt('HIGH')>0?`<span class="pill high">${cnt('HIGH')} High</span>`:''}
+        ${cnt('MEDIUM')>0?`<span class="pill medium">${cnt('MEDIUM')} Medium</span>`:''}
+        ${cnt('LOW')>0?`<span class="pill low">${cnt('LOW')} Low</span>`:''}
+        ${audit.findings.length===0?'<span class="pill safe">Clean</span>':''}
+      </div>
+    </div>`;
+  document.getElementById('auditShareLink').value = window.location.origin + window.location.pathname + '?audit=' + id;
+  document.getElementById('auditStatsGrid').innerHTML = `
+    <div class="stat-card"><div class="stat-card-title">Lines</div><div class="stat-card-val">${audit.stats.lines}</div></div>
+    <div class="stat-card"><div class="stat-card-title">Functions</div><div class="stat-card-val">${audit.stats.functions}</div></div>
+    <div class="stat-card"><div class="stat-card-title">Checks</div><div class="stat-card-val">${audit.stats.checks_performed}</div></div>
+    <div class="stat-card"><div class="stat-card-title">Issues</div><div class="stat-card-val" style="color:${audit.findings.length>0?'var(--danger)':'var(--accent)'}">${audit.findings.length}</div></div>`;
+  document.getElementById('auditFindings').innerHTML = audit.findings.length === 0
+    ? `<div class="finding low" style="border-left-color:var(--accent)"><div class="finding-hdr"><span class="f-sev" style="color:var(--accent)">CLEAN</span><span class="f-title">No vulnerabilities found</span></div><div class="f-desc">Contract passed all security checks.</div></div>`
+    : audit.findings.map(f=>`<div class="finding ${f.severity.toLowerCase()}"><div class="finding-hdr"><span class="f-sev">${f.severity}</span><span class="f-title">${f.title}</span></div><div class="f-desc">${f.description}</div><div class="f-rec">${f.recommendation}</div></div>`).join('');
+  document.getElementById('auditResults').classList.add('visible');
+  document.getElementById('auditResults').scrollIntoView({ behavior:'smooth', block:'start' });
+}
+
+// ─── TOKEN ANALYZER ─────────────────────────────────
+async function runTokenAnalysis() {
+  const code = document.getElementById('tokenCode').value.trim();
+  if (!code) { showErr('tokenError','Paste a token contract first'); return; }
+  setLoading('tokenBtn','tokenBtnText','tokenLoader',true);
+  document.getElementById('tokenError').classList.remove('visible');
+  document.getElementById('tokenResults').classList.remove('visible');
+  try {
+    const result = await callAI(`You are a token security expert. Analyze this Solidity token contract for honeypot, rugpull, and tax risks. Return ONLY valid JSON, no markdown.
+Contract:
+${code}
+JSON format:
+{"verdict":"<SAFE|SUSPICIOUS|HONEYPOT|RUGPULL>","honeypot_risk":<0-100>,"rugpull_risk":<0-100>,"tax_risk":<0-100>,"ownership_risk":<0-100>,"buy_tax":<0-100 or null>,"sell_tax":<0-100 or null>,"summary":"<2 sentences>","flags":[{"severity":"<CRITICAL|HIGH|MEDIUM|LOW>","title":"<name>","description":"<detail>","recommendation":"<fix>"}]}`);
+    renderTokenResults(result);
+  } catch(e) { showErr('tokenError', e.message); }
+  finally { setLoading('tokenBtn','tokenBtnText','tokenLoader',false); }
+}
+
+function renderTokenResults(r) {
+  const vc = r.verdict === 'SAFE' ? 'var(--accent)' : r.verdict === 'SUSPICIOUS' ? 'var(--warn)' : 'var(--danger)';
+  document.getElementById('tokenCards').innerHTML = `
+    <div class="token-card"><div class="token-card-title">Verdict</div><div class="token-card-val" style="color:${vc}">${r.verdict}</div><div class="token-card-sub">${r.summary.split('.')[0]}</div></div>
+    <div class="token-card"><div class="token-card-title">Buy Tax</div><div class="token-card-val ${r.buy_tax>10?'danger':r.buy_tax>5?'warn':'safe'}">${r.buy_tax != null ? r.buy_tax+'%' : 'N/A'}</div></div>
+    <div class="token-card"><div class="token-card-title">Sell Tax</div><div class="token-card-val ${r.sell_tax>10?'danger':r.sell_tax>5?'warn':'safe'}">${r.sell_tax != null ? r.sell_tax+'%' : 'N/A'}</div></div>
+    <div class="token-card"><div class="token-card-title">Honeypot Risk</div><div class="token-card-val ${r.honeypot_risk>60?'danger':r.honeypot_risk>30?'warn':'safe'}">${r.honeypot_risk}%</div></div>`;
+
+  const bars = [
+    {label:'Honeypot Risk', val:r.honeypot_risk},
+    {label:'Rugpull Risk', val:r.rugpull_risk},
+    {label:'Tax Risk', val:r.tax_risk},
+    {label:'Ownership Risk', val:r.ownership_risk}
+  ];
+  document.getElementById('riskBars').innerHTML = bars.map(b=>{
+    const cls = b.val > 60 ? 'high-r' : b.val > 30 ? 'med-r' : 'low-r';
+    const color = b.val > 60 ? 'var(--danger)' : b.val > 30 ? 'var(--warn)' : 'var(--accent)';
+    return `<div class="risk-row">
+      <div class="risk-label">${b.label}</div>
+      <div class="risk-track"><div class="risk-fill ${cls}" style="width:${b.val}%"></div></div>
+      <div class="risk-pct" style="color:${color}">${b.val}%</div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('tokenFindings').innerHTML = (r.flags||[]).length === 0
+    ? `<div class="finding low" style="border-left-color:var(--accent)"><div class="finding-hdr"><span class="f-sev" style="color:var(--accent)">CLEAN</span><span class="f-title">No red flags detected</span></div></div>`
+    : (r.flags||[]).map(f=>`<div class="finding ${f.severity.toLowerCase()}"><div class="finding-hdr"><span class="f-sev">${f.severity}</span><span class="f-title">${f.title}</span></div><div class="f-desc">${f.description}</div><div class="f-rec">${f.recommendation}</div></div>`).join('');
+
+  document.getElementById('tokenResults').classList.add('visible');
+}
+
+// ─── COMPARE ────────────────────────────────────────
+async function runCompare() {
+  const a = document.getElementById('compareA').value.trim();
+  const b = document.getElementById('compareB').value.trim();
+  if (!a || !b) { showErr('compareError','Paste both contracts'); return; }
+  setLoading('compareBtn','compareBtnText','compareLoader',true);
+  document.getElementById('compareError').classList.remove('visible');
+  document.getElementById('compareResults').classList.remove('visible');
+  try {
+    const result = await callAI(`You are a smart contract security expert. Compare these two Solidity contracts and return ONLY valid JSON, no markdown.
+Contract A:
+${a}
+Contract B:
+${b}
+JSON format:
+{"winner":"<A|B|TIE>","winner_reason":"<1 sentence>","score_a":<0-100>,"score_b":<0-100>,"only_in_a":[{"title":"<issue>","severity":"<CRITICAL|HIGH|MEDIUM|LOW>","description":"<detail>"}],"only_in_b":[{"title":"<issue>","severity":"<CRITICAL|HIGH|MEDIUM|LOW>","description":"<detail>"}],"shared_issues":[{"title":"<issue>","severity":"<CRITICAL|HIGH|MEDIUM|LOW>","description":"<detail>"}],"summary":"<2 sentence comparison>"}`);
+    renderCompareResults(result);
+  } catch(e) { showErr('compareError', e.message); }
+  finally { setLoading('compareBtn','compareBtnText','compareLoader',false); }
+}
+
+function renderCompareResults(r) {
+  const wc = r.winner === 'A' ? 'var(--accent2)' : r.winner === 'B' ? 'var(--purple)' : 'var(--warn)';
+  document.getElementById('winnerBanner').innerHTML = `
+    <div>
+      <div class="winner-label">Winner</div>
+      <div class="winner-name" style="color:${wc}">Contract ${r.winner} ${r.winner==='TIE'?'':'wins'}</div>
+    </div>
+    <div style="flex:1">
+      <div style="font-size:12px;color:var(--muted)">${r.winner_reason}</div>
+      <div style="display:flex;gap:16px;margin-top:8px">
+        <span style="font-size:11px;color:var(--accent2)">A: ${r.score_a}/100</span>
+        <span style="font-size:11px;color:var(--purple)">B: ${r.score_b}/100</span>
+      </div>
+    </div>`;
+
+  let html = '';
+  if ((r.only_in_a||[]).length) {
+    html += `<div class="diff-section"><div class="diff-title"><span class="diff-badge a">Only in A</span> Issues unique to Contract A</div>`;
+    html += r.only_in_a.map(i=>`<div class="diff-item only-a"><strong>${i.title}</strong> (${i.severity})<br><span style="color:var(--muted)">${i.description}</span></div>`).join('');
+    html += '</div>';
+  }
+  if ((r.only_in_b||[]).length) {
+    html += `<div class="diff-section"><div class="diff-title"><span class="diff-badge b">Only in B</span> Issues unique to Contract B</div>`;
+    html += r.only_in_b.map(i=>`<div class="diff-item only-b"><strong>${i.title}</strong> (${i.severity})<br><span style="color:var(--muted)">${i.description}</span></div>`).join('');
+    html += '</div>';
+  }
+  if ((r.shared_issues||[]).length) {
+    html += `<div class="diff-section"><div class="diff-title"><span class="diff-badge both">Shared</span> Issues in both contracts</div>`;
+    html += r.shared_issues.map(i=>`<div class="diff-item shared"><strong>${i.title}</strong> (${i.severity})<br><span style="color:var(--muted)">${i.description}</span></div>`).join('');
+    html += '</div>';
+  }
+  if (!html) html = `<div class="finding low" style="border-left-color:var(--accent);margin-bottom:12px"><div class="finding-hdr"><span class="f-sev" style="color:var(--accent)">CLEAN</span><span class="f-title">No significant differences found</span></div></div>`;
+  document.getElementById('compareContent').innerHTML = html;
+  document.getElementById('compareResults').classList.add('visible');
+}
+
+// ─── FIX SUGGESTER ──────────────────────────────────
+let fixedCode = '';
+async function runFix() {
+  const code = document.getElementById('fixCode').value.trim();
+  if (!code) { showErr('fixError','Paste a contract to fix'); return; }
+  setLoading('fixBtn','fixBtnText','fixLoader',true);
+  document.getElementById('fixError').classList.remove('visible');
+  document.getElementById('fixResults').classList.remove('visible');
+  try {
+    const result = await callAI(`You are a smart contract security expert. Fix all vulnerabilities in this Solidity contract. Return ONLY valid JSON, no markdown.
+Contract:
+${code}
+JSON format:
+{"changes":[{"title":"<fix name>","description":"<what was changed and why>"}],"fixed_code":"<complete fixed Solidity contract as a single string with \\n for newlines>"}`);
+    fixedCode = result.fixed_code || '';
+    document.getElementById('fixChanges').innerHTML = (result.changes||[]).map(c=>`
+      <div class="fix-change">
+        <div class="fix-change-title">✓ ${c.title}</div>
+        <div class="fix-change-desc">${c.description}</div>
+      </div>`).join('');
+    document.getElementById('fixOutput').textContent = fixedCode;
+    document.getElementById('fixResults').classList.add('visible');
+  } catch(e) { showErr('fixError', e.message); }
+  finally { setLoading('fixBtn','fixBtnText','fixLoader',false); }
+}
+
+function copyFixedCode() {
+  navigator.clipboard.writeText(fixedCode).then(() => showToast('Fixed code copied!'));
+}
+
+// ─── LEADERBOARD ────────────────────────────────────
+let lbMode = 'shame';
+function switchLbTab(mode) {
+  lbMode = mode;
+  document.querySelectorAll('.lb-tab').forEach((t,i)=>{
+    t.classList.toggle('active', (i===0&&mode==='shame')||(i===1&&mode==='fame'));
+  });
+  renderLeaderboard(mode);
+}
+
+function renderLeaderboard(mode) {
+  const h = getHistory();
+  const lbEl = document.getElementById('lbContent');
+  if (h.length === 0) {
+    lbEl.innerHTML = `<div class="lb-empty">No audits yet.<br>Run a security audit and submit it to appear here!</div>`;
+    return;
+  }
+  const sorted = [...h].sort((a,b) => mode === 'shame' ? a.score - b.score : b.score - a.score);
+  lbEl.innerHTML = sorted.map((item, i) => {
+    const sc = item.score >= 70 ? 'high' : item.score >= 40 ? 'medium' : 'low';
+    const vc = item.verdict === 'SECURE' ? 'var(--accent)' : item.verdict === 'MODERATE RISK' ? 'var(--warn)' : 'var(--danger)';
+    const rankClass = i===0?'gold':i===1?'silver':i===2?'bronze':'';
+    const medal = i===0?'🥇':i===1?'🥈':i===2?'🥉':i+1;
+    const date = new Date(item.date).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'2-digit'});
+    const issues = item.findings ? item.findings.length : 0;
+    return `<div class="lb-row">
+      <div class="lb-rank ${rankClass}">${medal}</div>
+      <div class="lb-contract">
+        <div class="lb-contract-name">${item.codeSnippet.slice(0,30).replace('// ','').trim()}...</div>
+        <div class="lb-contract-date">${date} ${item.wallet ? '· ' + item.wallet.slice(0,6)+'...' : ''}</div>
+      </div>
+      <div class="lb-score ${sc}">${item.score}</div>
+      <div class="lb-verdict" style="color:${vc}">${item.verdict}</div>
+      <div class="lb-issues ${issues===0?'zero':''}">${issues}</div>
+    </div>`;
+  }).join('');
+}
+
+// ─── Shortcuts ──────────────────────────────────────
+function submitToLeaderboard() {
+  if (!lastAudit) return;
+  switchTab('leaderboard');
+  showToast('Audit added to leaderboard!');
+}
+
+function sendToFix() {
+  const code = document.getElementById('auditCode').value;
+  document.getElementById('fixCode').value = code;
+  switchTab('fix');
+  showToast('Contract sent to Fix Suggester');
+}
+
+// ─── History Drawer ──────────────────────────────────
+function openHistory() {
+  renderHistoryDrawer();
+  document.getElementById('historyDrawer').classList.add('open');
+  document.getElementById('drawerOverlay').classList.add('open');
+}
+function closeHistory() {
+  document.getElementById('historyDrawer').classList.remove('open');
+  document.getElementById('drawerOverlay').classList.remove('open');
+}
+function renderHistoryDrawer() {
+  const h = getHistory();
+  const body = document.getElementById('historyBody');
+  if (h.length === 0) { body.innerHTML = `<div class="h-empty">No audits yet.<br>Run your first audit to see history here.</div>`; return; }
+  body.innerHTML = h.map((item,i)=>{
+    const sc = item.score>=70?'high':item.score>=40?'medium':'low';
+    const date = new Date(item.date).toLocaleDateString('en-GB',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});
+    return `<div class="h-item" onclick="loadFromHistory(${i})">
+      <div class="h-item-top">
+        <span class="h-score ${sc}">${item.score}/100</span>
+        <span class="h-date">${date}</span>
+        <button class="h-del" onclick="deleteHistory(event,${i})">✕</button>
+      </div>
+      <div class="h-verdict" style="color:${item.score>=70?'var(--accent)':item.score>=40?'var(--warn)':'var(--danger)'}">${item.verdict}</div>
+      <div class="h-snippet">${item.codeSnippet}</div>
+    </div>`;
+  }).join('');
+}
+function loadFromHistory(i) {
+  const item = getHistory()[i];
+  if (!item) return;
+  lastAudit = item; lastAuditId = item.id;
+  renderAuditResults(item, item.id);
+  closeHistory(); switchTab('audit');
+}
+function deleteHistory(e,i) {
+  e.stopPropagation();
+  const h = getHistory(); h.splice(i,1); saveHistory(h); updateHistCount(); renderHistoryDrawer(); showToast('Removed');
+}
+function clearHistory() {
+  if(!confirm('Clear all?')) return;
+  saveHistory([]); updateHistCount(); renderHistoryDrawer(); showToast('History cleared');
+}
+
+// ─── Utils ───────────────────────────────────────────
+function showErr(id, msg) { const e = document.getElementById(id); e.textContent='⚠ '+msg; e.classList.add('visible'); }
+function showToast(msg) {
+  const t = document.getElementById('toast'); t.textContent=msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 2500);
+}
+function copyLink(inputId, btnId) {
+  const val = document.getElementById(inputId).value;
+  if (!val) return;
+  navigator.clipboard.writeText(val).then(()=>{
+    const btn = document.getElementById(btnId); btn.textContent='✓ Copied!'; btn.classList.add('copied');
+    showToast('Link copied!');
+    setTimeout(()=>{ btn.textContent='Copy'; btn.classList.remove('copied'); }, 2000);
+  });
+}
+function downloadReport() {
+  if (!lastAudit) return;
+  const d = lastAudit; const date = new Date().toISOString().split('T')[0];
+  let r = `AUDITAI SECURITY REPORT — ${date}\nWallet: ${walletAddr||'Not connected'}\n${'='.repeat(50)}\nSCORE: ${d.score}/100\nVERDICT: ${d.verdict}\n\nSUMMARY:\n${d.summary}\n\n${'='.repeat(50)}\nFINDINGS\n${'='.repeat(50)}\n`;
+  if (!d.findings.length) r += '\nNo vulnerabilities detected.\n';
+  else d.findings.forEach((f,i)=>{ r+=`\n[${i+1}] ${f.severity} — ${f.title}\n${f.description}\nFIX: ${f.recommendation}\n`; });
+  r += `\n${'='.repeat(50)}\nAuditAI — Free Smart Contract Security Platform\nNot a replacement for professional audits.\n`;
+  const blob = new Blob([r],{type:'text/plain'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href=url; a.download=`audit-${date}.txt`; a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ─── Init ─────────────────────────────────────────────
+updateHistCount();
+const params = new URLSearchParams(window.location.search);
+const sharedId = params.get('audit');
+if (sharedId) {
+  const item = getHistory().find(h=>h.id===sharedId);
+  if (item) { lastAudit=item; lastAuditId=item.id; renderAuditResults(item,item.id); showToast('Shared audit loaded'); }
+}
+if (window.ethereum) {
+  window.ethereum.on('accountsChanged', accounts=>{
+    if (!accounts.length) { walletAddr=null; document.getElementById('walletBtn').classList.remove('connected'); document.getElementById('wLabel').textContent='Connect Wallet'; }
+  });
+}
+</script>
+</body>
+</html>
