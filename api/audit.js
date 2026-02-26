@@ -9,22 +9,32 @@ export default async function handler(req, res) {
   try {
     const { prompt } = req.body;
 
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: { temperature: 0.1, maxOutputTokens: 4096 }
-        })
-      }
-    );
+    if (!process.env.GEMINI_API_KEY) {
+      throw new Error('GEMINI_API_KEY environment variable not set');
+    }
+
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${process.env.GEMINI_API_KEY}`;
+
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: { temperature: 0.1, maxOutputTokens: 4096 }
+      })
+    });
 
     const data = await response.json();
 
+    console.log('Gemini status:', response.status);
+    console.log('Gemini response:', JSON.stringify(data).slice(0, 500));
+
+    if (data.error) {
+      throw new Error('Gemini error: ' + data.error.message);
+    }
+
     if (!data.candidates || !data.candidates[0]) {
-      throw new Error('No response from Gemini');
+      throw new Error('No candidates: ' + JSON.stringify(data));
     }
 
     const text = data.candidates[0].content.parts[0].text;
@@ -33,6 +43,7 @@ export default async function handler(req, res) {
     res.status(200).json(parsed);
 
   } catch (err) {
+    console.error('API Error:', err.message);
     res.status(500).json({ error: err.message });
   }
 }
