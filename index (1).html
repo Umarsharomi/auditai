@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AuditAI — Free Smart Contract Security Scanner</title>
+<meta name="description" content="AI-powered smart contract security scanner. Detect reentrancy, honeypots, rugpulls and 20+ vulnerabilities instantly. Free forever.">
+<meta property="og:title" content="AuditAI — Smart Contract Security Scanner">
+<meta property="og:description" content="Free AI-powered smart contract auditing. Detect vulnerabilities before deployment.">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="AuditAI — Smart Contract Security Scanner">
+<meta name="twitter:description" content="Free AI-powered smart contract auditing. Detect vulnerabilities before deployment.">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap');
+
+  :root {
+    --bg: #050A0E;
+    --surface: #0C1419;
+    --surface2: #111D24;
+    --border: #1A2A35;
+    --accent: #00FF88;
+    --accent2: #00C4FF;
+    --danger: #FF4560;
+    --warn: #FFB800;
+    --text: #E0EEF5;
+    --muted: #4A6070;
+    --font-display: 'Syne', sans-serif;
+    --font-mono: 'Space Mono', monospace;
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html { scroll-behavior: smooth; }
+  body { background:var(--bg); color:var(--text); font-family:var(--font-mono); overflow-x:hidden; }
+
+  body::before {
+    content:''; position:fixed; inset:0;
+    background-image: linear-gradient(rgba(0,255,136,0.025) 1px,transparent 1px), linear-gradient(90deg,rgba(0,255,136,0.025) 1px,transparent 1px);
+    background-size:40px 40px; pointer-events:none; z-index:0;
+  }
+
+  .container { max-width:1100px; margin:0 auto; padding:0 24px; position:relative; z-index:1; }
+
+  /* ── Navbar ── */
+  nav {
+    position:fixed; top:0; left:0; right:0; z-index:100;
+    padding:16px 0; border-bottom:1px solid transparent;
+    transition:all 0.3s; backdrop-filter:blur(0px);
+  }
+  nav.scrolled { border-bottom-color:var(--border); backdrop-filter:blur(20px); background:rgba(5,10,14,0.8); }
+  .nav-inner { display:flex; align-items:center; justify-content:space-between; }
+  .nav-logo { display:flex; align-items:center; gap:10px; text-decoration:none; }
+  .nav-logo-icon { width:32px; height:32px; display:flex; align-items:center; justify-content:center; font-size:15px; color:var(--accent); clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%); background:rgba(0,255,136,0.08); border:1px solid rgba(0,255,136,0.3); }
+  .nav-logo-text { font-family:var(--font-display); font-size:18px; font-weight:800; color:var(--text); }
+  .nav-logo-text span { color:var(--accent); }
+  .nav-links { display:flex; align-items:center; gap:24px; }
+  .nav-link { color:var(--muted); font-size:11px; letter-spacing:1px; text-transform:uppercase; text-decoration:none; transition:color 0.2s; }
+  .nav-link:hover { color:var(--accent); }
+  .nav-cta { padding:8px 18px; background:var(--accent); color:var(--bg); font-family:var(--font-mono); font-size:11px; font-weight:700; letter-spacing:1px; text-transform:uppercase; text-decoration:none; transition:all 0.2s; }
+  .nav-cta:hover { background:#00e07a; transform:translateY(-1px); }
+
+  /* ── Hero ── */
+  .hero {
+    min-height:100vh; display:flex; align-items:center; justify-content:center;
+    text-align:center; padding:120px 0 80px; position:relative;
+  }
+
+  .hero-glow {
+    position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+    width:800px; height:800px;
+    background:radial-gradient(circle, rgba(0,255,136,0.04) 0%, transparent 60%);
+    pointer-events:none;
+  }
+
+  .hero-badge {
+    display:inline-flex; align-items:center; gap:8px;
+    padding:6px 14px; border:1px solid rgba(0,255,136,0.3);
+    background:rgba(0,255,136,0.05); font-size:10px; letter-spacing:2px;
+    text-transform:uppercase; color:var(--accent); margin-bottom:28px;
+    animation:fadeUp 0.6s ease both;
+  }
+
+  .hero-badge-dot { width:5px; height:5px; border-radius:50%; background:var(--accent); animation:pulse 2s infinite; }
+
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+  @keyframes fadeUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+  @keyframes fadeUp2 { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+
+  .hero h1 {
+    font-family:var(--font-display); font-size:clamp(40px,7vw,80px);
+    font-weight:800; line-height:1.05; letter-spacing:-2px;
+    margin-bottom:24px;
+    animation:fadeUp 0.6s 0.1s ease both;
+  }
+
+  .hero h1 .line2 { color:var(--accent); display:block; }
+
+  .hero-sub {
+    font-size:15px; color:var(--muted); max-width:520px; margin:0 auto 40px;
+    line-height:1.8; animation:fadeUp 0.6s 0.2s ease both;
+  }
+
+  .hero-actions { display:flex; align-items:center; justify-content:center; gap:14px; flex-wrap:wrap; animation:fadeUp 0.6s 0.3s ease both; }
+
+  .btn-primary { padding:14px 32px; background:var(--accent); color:var(--bg); font-family:var(--font-display); font-size:14px; font-weight:700; letter-spacing:1px; text-decoration:none; transition:all 0.2s; text-transform:uppercase; display:inline-flex; align-items:center; gap:8px; }
+  .btn-primary:hover { background:#00e07a; transform:translateY(-2px); box-shadow:0 12px 40px rgba(0,255,136,0.3); }
+  .btn-secondary { padding:14px 32px; background:transparent; color:var(--text); font-family:var(--font-mono); font-size:12px; letter-spacing:1px; text-decoration:none; transition:all 0.2s; text-transform:uppercase; border:1px solid var(--border); }
+  .btn-secondary:hover { border-color:var(--accent2); color:var(--accent2); }
+
+  .hero-stats { display:flex; justify-content:center; gap:48px; margin-top:64px; padding-top:48px; border-top:1px solid var(--border); flex-wrap:wrap; animation:fadeUp 0.6s 0.4s ease both; }
+  .hstat { text-align:center; }
+  .hstat-num { font-family:var(--font-display); font-size:32px; font-weight:800; color:var(--accent); }
+  .hstat-lbl { font-size:10px; color:var(--muted); letter-spacing:2px; text-transform:uppercase; margin-top:4px; }
+
+  /* ── Section ── */
+  section { padding:80px 0; }
+  .section-label { font-size:10px; letter-spacing:3px; text-transform:uppercase; color:var(--accent); margin-bottom:14px; }
+  .section-title { font-family:var(--font-display); font-size:clamp(28px,4vw,44px); font-weight:800; line-height:1.1; letter-spacing:-1px; margin-bottom:16px; }
+  .section-sub { color:var(--muted); font-size:13px; line-height:1.8; max-width:480px; }
+
+  /* ── Features ── */
+  .features-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:2px; margin-top:48px; }
+  .feature-card { background:var(--surface); border:1px solid var(--border); padding:28px; transition:all 0.3s; position:relative; overflow:hidden; }
+  .feature-card::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; background:linear-gradient(90deg,transparent,var(--accent),transparent); opacity:0; transition:opacity 0.3s; }
+  .feature-card:hover { border-color:rgba(0,255,136,0.2); transform:translateY(-3px); }
+  .feature-card:hover::before { opacity:1; }
+  .feature-icon { font-size:28px; margin-bottom:16px; }
+  .feature-title { font-family:var(--font-display); font-size:16px; font-weight:700; margin-bottom:10px; }
+  .feature-desc { color:var(--muted); font-size:12px; line-height:1.8; }
+  .feature-tag { display:inline-block; margin-top:14px; font-size:9px; padding:3px 8px; border:1px solid var(--accent); color:var(--accent); letter-spacing:2px; text-transform:uppercase; }
+
+  /* ── How it works ── */
+  .steps { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:2px; margin-top:48px; }
+  .step { background:var(--surface); border:1px solid var(--border); padding:28px; position:relative; }
+  .step-num { font-family:var(--font-display); font-size:48px; font-weight:800; color:rgba(0,255,136,0.1); line-height:1; margin-bottom:16px; }
+  .step-title { font-family:var(--font-display); font-size:15px; font-weight:700; margin-bottom:8px; }
+  .step-desc { color:var(--muted); font-size:12px; line-height:1.8; }
+  .step-arrow { position:absolute; top:28px; right:-12px; width:24px; height:24px; background:var(--bg); border:1px solid var(--border); display:flex; align-items:center; justify-content:center; font-size:10px; color:var(--accent); z-index:1; }
+
+  /* ── Vulnerabilities ── */
+  .vuln-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:8px; margin-top:40px; }
+  .vuln-item { background:var(--surface); border:1px solid var(--border); padding:12px 16px; display:flex; align-items:center; gap:10px; font-size:11px; transition:all 0.2s; }
+  .vuln-item:hover { border-color:var(--danger); color:var(--danger); }
+  .vuln-dot { width:5px; height:5px; border-radius:50%; background:var(--danger); flex-shrink:0; }
+
+  /* ── CTA ── */
+  .cta-section { text-align:center; padding:100px 0; background:linear-gradient(180deg, transparent 0%, rgba(0,255,136,0.02) 50%, transparent 100%); }
+  .cta-title { font-family:var(--font-display); font-size:clamp(32px,5vw,56px); font-weight:800; letter-spacing:-1px; margin-bottom:16px; }
+  .cta-sub { color:var(--muted); font-size:13px; margin-bottom:36px; line-height:1.8; }
+
+  /* ── Blog preview ── */
+  .blog-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:16px; margin-top:40px; }
+  .blog-card { background:var(--surface); border:1px solid var(--border); padding:24px; text-decoration:none; color:var(--text); transition:all 0.2s; display:block; }
+  .blog-card:hover { border-color:var(--accent2); transform:translateY(-3px); }
+  .blog-tag { font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--accent); margin-bottom:10px; }
+  .blog-title { font-family:var(--font-display); font-size:16px; font-weight:700; margin-bottom:8px; line-height:1.3; }
+  .blog-excerpt { color:var(--muted); font-size:11px; line-height:1.8; margin-bottom:14px; }
+  .blog-meta { font-size:10px; color:var(--muted); display:flex; gap:12px; }
+
+  /* ── Footer ── */
+  footer { border-top:1px solid var(--border); padding:48px 0 32px; }
+  .footer-grid { display:grid; grid-template-columns:2fr 1fr 1fr 1fr; gap:40px; margin-bottom:40px; }
+  .footer-brand-desc { color:var(--muted); font-size:11px; line-height:1.8; margin-top:12px; max-width:260px; }
+  .footer-col-title { font-size:10px; letter-spacing:2px; text-transform:uppercase; color:var(--muted); margin-bottom:14px; }
+  .footer-links { display:flex; flex-direction:column; gap:8px; }
+  .footer-link { color:var(--muted); font-size:11px; text-decoration:none; transition:color 0.2s; }
+  .footer-link:hover { color:var(--accent); }
+  .footer-bottom { display:flex; align-items:center; justify-content:space-between; padding-top:24px; border-top:1px solid var(--border); flex-wrap:wrap; gap:12px; }
+  .footer-copy { font-size:10px; color:var(--muted); letter-spacing:1px; }
+  .footer-social { display:flex; gap:12px; }
+  .social-btn { width:32px; height:32px; border:1px solid var(--border); display:flex; align-items:center; justify-content:center; font-size:13px; text-decoration:none; color:var(--muted); transition:all 0.2s; }
+  .social-btn:hover { border-color:var(--accent); color:var(--accent); }
+
+  @media(max-width:768px) {
+    .nav-links { display:none; }
+    .footer-grid { grid-template-columns:1fr 1fr; }
+    .hero-stats { gap:24px; }
+    .step-arrow { display:none; }
+  }
+  @media(max-width:480px) {
+    .footer-grid { grid-template-columns:1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Navbar -->
+<nav id="navbar">
+  <div class="container">
+    <div class="nav-inner">
+      <a href="/" class="nav-logo">
+        <div class="nav-logo-icon">⬡</div>
+        <div class="nav-logo-text">Audit<span>AI</span></div>
+      </a>
+      <div class="nav-links">
+        <a href="#features" class="nav-link">Features</a>
+        <a href="#how-it-works" class="nav-link">How it works</a>
+        <a href="#vulnerabilities" class="nav-link">Coverage</a>
+        <a href="/blog.html" class="nav-link">Blog</a>
+      </div>
+      <a href="/app.html" class="nav-cta">Launch App →</a>
+    </div>
+  </div>
+</nav>
+
+<!-- Hero -->
+<section class="hero">
+  <div class="hero-glow"></div>
+  <div class="container">
+    <div class="hero-badge"><span class="hero-badge-dot"></span> AI-Powered · Free Forever · No Signup</div>
+    <h1>Audit Smart Contracts<span class="line2">Before They Audit You.</span></h1>
+    <p class="hero-sub">Paste any Solidity contract and get an instant AI security audit. Detect reentrancy, honeypots, rugpulls and 20+ vulnerabilities in seconds.</p>
+    <div class="hero-actions">
+      <a href="/app.html" class="btn-primary">⬡ Start Auditing Free</a>
+      <a href="#how-it-works" class="btn-secondary">See how it works</a>
+    </div>
+    <div class="hero-stats">
+      <div class="hstat"><div class="hstat-num">20+</div><div class="hstat-lbl">Vuln Checks</div></div>
+      <div class="hstat"><div class="hstat-num">&lt;30s</div><div class="hstat-lbl">Audit Time</div></div>
+      <div class="hstat"><div class="hstat-num">$0</div><div class="hstat-lbl">Cost</div></div>
+      <div class="hstat"><div class="hstat-num">5</div><div class="hstat-lbl">Tools</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- Features -->
+<section id="features">
+  <div class="container">
+    <div class="section-label">Features</div>
+    <div class="section-title">Everything you need<br>to ship safe contracts</div>
+    <p class="section-sub">A complete smart contract security platform — not just a single scanner.</p>
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feature-icon">🔍</div>
+        <div class="feature-title">Security Audit</div>
+        <div class="feature-desc">Full AI-powered security audit with severity scoring, detailed findings, and fix recommendations for every vulnerability.</div>
+        <span class="feature-tag">Core</span>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🪙</div>
+        <div class="feature-title">Token Analyzer</div>
+        <div class="feature-desc">Detect honeypots, rugpull mechanisms, hidden sell taxes, blacklists, and dangerous owner privileges before you invest.</div>
+        <span class="feature-tag">Investor</span>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🔧</div>
+        <div class="feature-title">Fix Suggester</div>
+        <div class="feature-desc">Automatically generates a fully patched version of your vulnerable contract with a detailed changelog of every fix applied.</div>
+        <span class="feature-tag">Developer</span>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">⚖️</div>
+        <div class="feature-title">Contract Comparison</div>
+        <div class="feature-desc">Compare two contracts side by side. See unique vulnerabilities, shared issues, and get a clear winner verdict with scores.</div>
+        <span class="feature-tag">Auditor</span>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📡</div>
+        <div class="feature-title">Address Scanner</div>
+        <div class="feature-desc">Paste a mainnet contract address and AuditAI automatically fetches and audits the deployed code via Etherscan API.</div>
+        <span class="feature-tag">New</span>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🏆</div>
+        <div class="feature-title">Leaderboard</div>
+        <div class="feature-desc">Hall of Fame and Hall of Shame. Submit your audit results to rank against others and build your security reputation.</div>
+        <span class="feature-tag">Community</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- How it works -->
+<section id="how-it-works" style="background:var(--surface)">
+  <div class="container">
+    <div class="section-label">How it works</div>
+    <div class="section-title">Audit in 3 steps</div>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">01</div>
+        <div class="step-title">Paste your contract</div>
+        <div class="step-desc">Paste your Solidity code, enter a mainnet contract address, or load one of our example contracts.</div>
+        <div class="step-arrow">→</div>
+      </div>
+      <div class="step">
+        <div class="step-num">02</div>
+        <div class="step-title">AI analyzes it</div>
+        <div class="step-desc">Our AI engine runs 20+ security checks covering reentrancy, access control, overflow, and more.</div>
+        <div class="step-arrow">→</div>
+      </div>
+      <div class="step">
+        <div class="step-num">03</div>
+        <div class="step-title">Get your report</div>
+        <div class="step-desc">Receive a full security report with score, findings, fix suggestions, and a shareable link. Download as PDF.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Vulnerabilities -->
+<section id="vulnerabilities">
+  <div class="container">
+    <div class="section-label">Coverage</div>
+    <div class="section-title">20+ vulnerability types<br>checked instantly</div>
+    <div class="vuln-grid">
+      <div class="vuln-item"><span class="vuln-dot"></span>Reentrancy Attack</div>
+      <div class="vuln-item"><span class="vuln-dot"></span>Integer Overflow</div>
+      <div class="vuln-item"><span class="vuln-dot"></span>tx.origin Auth</div>
+      <div class="vuln-item"><span class="vuln-dot"></span>Missing Access Control</div>
+      <div class="vuln-item"><span class="vuln-dot"></span>Unprotected Selfdestruct</div>
+      <div class="vuln-item"><span class="vuln-dot"></span>Unchecked Return Values</div>
+      <div class="vuln-item"><span class="vuln-dot"></span>Front-Running</div>
+      <div class="vuln-item"><span class="vuln-dot"></span>Timestamp Dependence</div>
+      <div class="vuln-item"><span class="vuln-dot"></span>Gas Limit Issues</div>
+      <div class="vuln-item"><span class="vuln-dot"></span>Honeypot Patterns</div>
+      <div class="vuln-item"><span class="vuln-dot"></span>Hidden Sell Tax</div>
+      <div class="vuln-item"><span class="vuln-dot"></span>Blacklist Mechanisms</div>
+      <div class="vuln-item"><span class="vuln-dot"></span>Rugpull Vectors</div>
+      <div class="vuln-item"><span class="vuln-dot"></span>Zero Address Bugs</div>
+      <div class="vuln-item"><span class="vuln-dot"></span>Delegatecall Misuse</div>
+      <div class="vuln-item"><span class="vuln-dot"></span>Flash Loan Attack</div>
+      <div class="vuln-item"><span class="vuln-dot"></span>Price Oracle Manipulation</div>
+      <div class="vuln-item"><span class="vuln-dot"></span>Signature Replay</div>
+      <div class="vuln-item"><span class="vuln-dot"></span>Unsafe Randomness</div>
+      <div class="vuln-item"><span class="vuln-dot"></span>Logic Errors</div>
+    </div>
+  </div>
+</section>
+
+<!-- Blog preview -->
+<section id="blog" style="background:var(--surface)">
+  <div class="container">
+    <div class="section-label">Blog</div>
+    <div class="section-title">Smart Contract Security<br>Knowledge Base</div>
+    <div class="blog-grid">
+      <a href="/blog/reentrancy.html" class="blog-card">
+        <div class="blog-tag">Attack Vectors</div>
+        <div class="blog-title">The Reentrancy Attack: How the $60M DAO Hack Happened</div>
+        <div class="blog-excerpt">Learn how reentrancy attacks work, why they're still common, and how to protect your contracts with ReentrancyGuard.</div>
+        <div class="blog-meta"><span>5 min read</span><span>Beginner</span></div>
+      </a>
+      <a href="/blog/honeypot.html" class="blog-card">
+        <div class="blog-tag">Token Safety</div>
+        <div class="blog-title">How to Detect a Honeypot Token Before You Get Trapped</div>
+        <div class="blog-excerpt">Honeypot tokens let you buy but not sell. We break down the 7 most common honeypot patterns and how to spot them.</div>
+        <div class="blog-meta"><span>7 min read</span><span>Intermediate</span></div>
+      </a>
+      <a href="/blog/audit-checklist.html" class="blog-card">
+        <div class="blog-tag">Best Practices</div>
+        <div class="blog-title">The Smart Contract Security Checklist Every Developer Needs</div>
+        <div class="blog-excerpt">A comprehensive pre-deployment checklist covering the 20 most critical security checks for Solidity contracts.</div>
+        <div class="blog-meta"><span>10 min read</span><span>All Levels</span></div>
+      </a>
+    </div>
+    <div style="text-align:center;margin-top:32px">
+      <a href="/blog.html" class="btn-secondary">View All Articles →</a>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-section">
+  <div class="container">
+    <div class="cta-title">Ready to audit<br>your contract?</div>
+    <p class="cta-sub">Free forever. No signup. No credit card. Just paste and audit.</p>
+    <a href="/app.html" class="btn-primary">⬡ Start Auditing Free</a>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer>
+  <div class="container">
+    <div class="footer-grid">
+      <div>
+        <div class="nav-logo" style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+          <div class="nav-logo-icon">⬡</div>
+          <div class="nav-logo-text">Audit<span>AI</span></div>
+        </div>
+        <div class="footer-brand-desc">Free AI-powered smart contract security platform. Not a replacement for professional audits.</div>
+      </div>
+      <div>
+        <div class="footer-col-title">Product</div>
+        <div class="footer-links">
+          <a href="/app.html" class="footer-link">Security Audit</a>
+          <a href="/app.html" class="footer-link">Token Analyzer</a>
+          <a href="/app.html" class="footer-link">Fix Suggester</a>
+          <a href="/app.html" class="footer-link">Compare Contracts</a>
+          <a href="/app.html" class="footer-link">Leaderboard</a>
+        </div>
+      </div>
+      <div>
+        <div class="footer-col-title">Resources</div>
+        <div class="footer-links">
+          <a href="/blog.html" class="footer-link">Blog</a>
+          <a href="/blog/reentrancy.html" class="footer-link">Reentrancy Guide</a>
+          <a href="/blog/honeypot.html" class="footer-link">Honeypot Guide</a>
+          <a href="/blog/audit-checklist.html" class="footer-link">Audit Checklist</a>
+        </div>
+      </div>
+      <div>
+        <div class="footer-col-title">Connect</div>
+        <div class="footer-links">
+          <a href="https://t.me/auditai_bot" class="footer-link">Telegram Bot</a>
+          <a href="https://twitter.com/auditai" class="footer-link">Twitter/X</a>
+          <a href="https://github.com/yourusername/auditai" class="footer-link">GitHub</a>
+        </div>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <div class="footer-copy">© 2025 AuditAI · Free Smart Contract Security Platform</div>
+      <div class="footer-social">
+        <a href="https://twitter.com/auditai" class="social-btn">𝕏</a>
+        <a href="https://t.me/auditai_bot" class="social-btn">✈</a>
+        <a href="https://github.com/yourusername/auditai" class="social-btn">⌥</a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script defer src="/_vercel/insights/script.js"></script>
+<script>
+  // Navbar scroll effect
+  window.addEventListener('scroll', () => {
+    document.getElementById('navbar').classList.toggle('scrolled', window.scrollY > 50);
+  });
+</script>
+</body>
+</html>
