@@ -82,7 +82,7 @@ auditai/
 
 ### 1. Clone the repo
 ```bash
-git clone https://github.com/yourusername/auditai.git
+git clone https://github.com/Umarsharomi/auditai.git
 cd auditai
 ```
 
