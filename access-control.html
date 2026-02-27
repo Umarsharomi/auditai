@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Missing Access Control: The #1 Smart Contract Vulnerability — AuditAI Blog</title>
+<meta name="description" content="Missing or broken access control is the most exploited vulnerability in DeFi. Learn the patterns, real examples, and how to fix them.">
+<meta name="keywords" content="smart contract access control, onlyOwner, solidity security, missing access control, DeFi vulnerability">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap');
+  :root{--bg:#050A0E;--surface:#0C1419;--surface2:#111D24;--border:#1A2A35;--accent:#00FF88;--accent2:#00C4FF;--danger:#FF4560;--warn:#FFB800;--text:#E0EEF5;--muted:#4A6070;--font-display:'Syne',sans-serif;--font-mono:'Space Mono',monospace}
+  *{margin:0;padding:0;box-sizing:border-box} body{background:var(--bg);color:var(--text);font-family:var(--font-mono);overflow-x:hidden;line-height:1.8}
+  body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(0,255,136,0.02) 1px,transparent 1px),linear-gradient(90deg,rgba(0,255,136,0.02) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0}
+  .container{max-width:720px;margin:0 auto;padding:0 24px;position:relative;z-index:1}
+  nav{padding:20px 0;border-bottom:1px solid var(--border);margin-bottom:48px}
+  .nav-inner{display:flex;align-items:center;justify-content:space-between}
+  .nav-logo{display:flex;align-items:center;gap:10px;text-decoration:none}
+  .nav-logo-icon{width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-size:13px;color:var(--accent);clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%);background:rgba(0,255,136,0.08);border:1px solid rgba(0,255,136,0.3)}
+  .nav-logo-text{font-family:var(--font-display);font-size:17px;font-weight:800;color:var(--text)} .nav-logo-text span{color:var(--accent)}
+  .nav-cta{padding:6px 14px;background:var(--accent);color:var(--bg);font-family:var(--font-mono);font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;text-decoration:none}
+  .article-tag{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--accent2);margin-bottom:14px}
+  .article-title{font-family:var(--font-display);font-size:clamp(26px,5vw,42px);font-weight:800;letter-spacing:-1px;line-height:1.1;margin-bottom:16px}
+  .article-meta{display:flex;gap:16px;font-size:10px;color:var(--muted);margin-bottom:40px;padding-bottom:24px;border-bottom:1px solid var(--border)}
+  h2{font-family:var(--font-display);font-size:22px;font-weight:700;margin:40px 0 16px;color:var(--accent2)}
+  p{font-size:13px;color:var(--muted);line-height:1.9;margin-bottom:16px} strong{color:var(--text)}
+  .code-block{background:var(--surface);border:1px solid var(--border);border-left:3px solid;padding:20px;margin:20px 0;font-size:12px;overflow-x:auto;white-space:pre}
+  .code-block.bad{border-left-color:var(--danger);color:var(--danger)}
+  .code-block.good{border-left-color:var(--accent);color:var(--accent)}
+  .code-label{font-size:9px;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px}
+  .code-label.bad{color:var(--danger)} .code-label.good{color:var(--accent)}
+  .callout{background:var(--surface2);border:1px solid var(--border);border-left:3px solid var(--warn);padding:16px 20px;margin:20px 0;font-size:12px;color:var(--text);line-height:1.8} .callout strong{color:var(--warn)}
+  .audit-cta{background:var(--surface);border:1px solid var(--accent);padding:28px;text-align:center;margin:48px 0}
+  .audit-cta-title{font-family:var(--font-display);font-size:20px;font-weight:700;margin-bottom:8px}
+  .audit-cta-sub{color:var(--muted);font-size:12px;margin-bottom:20px;line-height:1.8}
+  .audit-cta-btn{display:inline-block;padding:11px 28px;background:var(--accent);color:var(--bg);font-family:var(--font-display);font-size:13px;font-weight:700;letter-spacing:1px;text-decoration:none;text-transform:uppercase}
+  footer{border-top:1px solid var(--border);padding:28px 0;text-align:center;color:var(--muted);font-size:10px;margin-top:60px}
+</style>
+</head>
+<body>
+<div class="container">
+  <nav><div class="nav-inner">
+    <a href="/" class="nav-logo"><div class="nav-logo-icon">⬡</div><div class="nav-logo-text">Audit<span>AI</span></div></a>
+    <a href="/app.html" class="nav-cta">Free Audit →</a>
+  </div></nav>
+
+  <article>
+    <div class="article-tag">Vulnerabilities</div>
+    <h1 class="article-title">Missing Access Control: The #1 Smart Contract Vulnerability</h1>
+    <div class="article-meta"><span>8 min read</span><span>Beginner</span><span>Updated 2025</span></div>
+
+    <p>According to Chainalysis, missing or broken access control is the <strong>single most exploited vulnerability category</strong> in DeFi history — responsible for hundreds of millions in losses. It's also one of the easiest to prevent.</p>
+    <p>Access control simply means: making sure only authorized addresses can call sensitive functions. When this is missing or broken, anyone can mint tokens, drain funds, or take over the contract.</p>
+
+    <h2>The Most Common Mistakes</h2>
+
+    <h2 style="font-size:16px;margin-top:24px;color:var(--text)">Mistake 1: No modifier on sensitive functions</h2>
+    <div class="code-label bad">❌ Anyone can mint</div>
+    <div class="code-block bad">function mint(address to, uint256 amount) public {
+    // No access control — ANYONE can call this!
+    totalSupply += amount;
+    balanceOf[to] += amount;
+}</div>
+    <div class="code-label good">✅ Fixed with onlyOwner</div>
+    <div class="code-block good">function mint(address to, uint256 amount) public onlyOwner {
+    totalSupply += amount;
+    balanceOf[to] += amount;
+}</div>
+
+    <h2 style="font-size:16px;margin-top:24px;color:var(--text)">Mistake 2: Using tx.origin instead of msg.sender</h2>
+    <div class="code-label bad">❌ Vulnerable to phishing</div>
+    <div class="code-block bad">modifier onlyOwner() {
+    require(tx.origin == owner, "Not owner");
+    // tx.origin is the original EOA, not the caller
+    // A malicious contract can exploit this!
+    _;
+}</div>
+    <div class="code-label good">✅ Use msg.sender always</div>
+    <div class="code-block good">modifier onlyOwner() {
+    require(msg.sender == owner, "Not owner");
+    _;
+}</div>
+
+    <div class="callout"><strong>Why tx.origin is dangerous:</strong> If a user interacts with a malicious contract, that contract can call your function and tx.origin will still be the user's address — bypassing your check. msg.sender is always the direct caller.</div>
+
+    <h2 style="font-size:16px;margin-top:24px;color:var(--text)">Mistake 3: No zero address check on ownership transfer</h2>
+    <div class="code-label bad">❌ Can accidentally burn ownership</div>
+    <div class="code-block bad">function transferOwnership(address newOwner) public onlyOwner {
+    owner = newOwner; // What if newOwner is address(0)?
+}</div>
+    <div class="code-label good">✅ Always check for zero address</div>
+    <div class="code-block good">function transferOwnership(address newOwner) public onlyOwner {
+    require(newOwner != address(0), "Zero address");
+    owner = newOwner;
+}</div>
+
+    <h2>Use OpenZeppelin's Ownable</h2>
+    <p>Don't write your own access control from scratch. Use <strong>OpenZeppelin's battle-tested Ownable contract</strong> which handles all edge cases correctly.</p>
+    <div class="code-label good">✅ Best practice</div>
+    <div class="code-block good">import "@openzeppelin/contracts/access/Ownable.sol";
+
+contract MyToken is Ownable {
+    function mint(address to, uint256 amount) public onlyOwner {
+        // Fully protected
+        _mint(to, amount);
+    }
+}</div>
+
+    <h2>Role-Based Access Control for Complex Contracts</h2>
+    <p>For contracts with multiple roles (admin, minter, pauser), use <strong>OpenZeppelin's AccessControl</strong> for granular permissions.</p>
+    <div class="code-label good">✅ Role-based access</div>
+    <div class="code-block good">import "@openzeppelin/contracts/access/AccessControl.sol";
+
+contract MyContract is AccessControl {
+    bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
+
+    constructor() {
+        _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
+        _grantRole(MINTER_ROLE, msg.sender);
+    }
+
+    function mint(address to, uint256 amount) public {
+        require(hasRole(MINTER_ROLE, msg.sender), "Not minter");
+        // ...
+    }
+}</div>
+
+    <div class="audit-cta">
+      <div class="audit-cta-title">Check your contract for access control issues</div>
+      <div class="audit-cta-sub">AuditAI detects missing modifiers, tx.origin usage, unprotected functions and more. Free for any Solidity contract.</div>
+      <a href="/app.html" class="audit-cta-btn">⬡ Run Free Audit</a>
+    </div>
+  </article>
+</div>
+<footer>AuditAI · <a href="/blog.html" style="color:var(--accent);text-decoration:none">← Back to Blog</a></footer>
+<script defer src="/_vercel/insights/script.js"></script>
+</body>
+</html>

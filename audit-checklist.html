@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Smart Contract Security Checklist — AuditAI Blog</title>
+<meta name="description" content="A comprehensive pre-deployment security checklist for Solidity smart contracts covering the 20 most critical security checks.">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap');
+  :root{--bg:#050A0E;--surface:#0C1419;--surface2:#111D24;--border:#1A2A35;--accent:#00FF88;--accent2:#00C4FF;--danger:#FF4560;--warn:#FFB800;--text:#E0EEF5;--muted:#4A6070;--font-display:'Syne',sans-serif;--font-mono:'Space Mono',monospace}
+  *{margin:0;padding:0;box-sizing:border-box} body{background:var(--bg);color:var(--text);font-family:var(--font-mono);overflow-x:hidden;line-height:1.8}
+  body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(0,255,136,0.02) 1px,transparent 1px),linear-gradient(90deg,rgba(0,255,136,0.02) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0}
+  .container{max-width:720px;margin:0 auto;padding:0 24px;position:relative;z-index:1}
+  nav{padding:20px 0;border-bottom:1px solid var(--border);margin-bottom:48px}
+  .nav-inner{display:flex;align-items:center;justify-content:space-between}
+  .nav-logo{display:flex;align-items:center;gap:10px;text-decoration:none}
+  .nav-logo-icon{width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-size:13px;color:var(--accent);clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%);background:rgba(0,255,136,0.08);border:1px solid rgba(0,255,136,0.3)}
+  .nav-logo-text{font-family:var(--font-display);font-size:17px;font-weight:800;color:var(--text)} .nav-logo-text span{color:var(--accent)}
+  .nav-cta{padding:6px 14px;background:var(--accent);color:var(--bg);font-family:var(--font-mono);font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;text-decoration:none}
+  .article-tag{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--accent);margin-bottom:14px}
+  .article-title{font-family:var(--font-display);font-size:clamp(26px,5vw,42px);font-weight:800;letter-spacing:-1px;line-height:1.1;margin-bottom:16px}
+  .article-meta{display:flex;gap:16px;font-size:10px;color:var(--muted);margin-bottom:40px;padding-bottom:24px;border-bottom:1px solid var(--border)}
+  h2{font-family:var(--font-display);font-size:22px;font-weight:700;margin:40px 0 16px;color:var(--accent)}
+  p{font-size:13px;color:var(--muted);line-height:1.9;margin-bottom:16px} strong{color:var(--text)}
+  .checklist{display:grid;gap:8px;margin:20px 0}
+  .check-item{background:var(--surface);border:1px solid var(--border);padding:14px 16px;display:flex;align-items:flex-start;gap:12px}
+  .check-box{width:18px;height:18px;border:1px solid var(--accent);flex-shrink:0;display:flex;align-items:center;justify-content:center;margin-top:2px;color:var(--accent);font-size:11px}
+  .check-content{flex:1}
+  .check-title{font-family:var(--font-display);font-size:13px;font-weight:700;margin-bottom:4px}
+  .check-desc{font-size:11px;color:var(--muted);line-height:1.7}
+  .check-item.critical .check-box{border-color:var(--danger);color:var(--danger)}
+  .check-item.critical .check-title{color:var(--danger)}
+  .check-item.high .check-box{border-color:var(--warn);color:var(--warn)}
+  .check-item.high .check-title{color:var(--warn)}
+  .severity-row{display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap}
+  .sev-badge{font-size:9px;padding:3px 8px;border:1px solid;letter-spacing:2px;text-transform:uppercase}
+  .sev-badge.critical{border-color:var(--danger);color:var(--danger)}
+  .sev-badge.high{border-color:var(--warn);color:var(--warn)}
+  .sev-badge.medium{border-color:var(--accent2);color:var(--accent2)}
+  .audit-cta{background:var(--surface);border:1px solid var(--accent);padding:28px;text-align:center;margin:48px 0}
+  .audit-cta-title{font-family:var(--font-display);font-size:20px;font-weight:700;margin-bottom:8px}
+  .audit-cta-sub{color:var(--muted);font-size:12px;margin-bottom:20px;line-height:1.8}
+  .audit-cta-btn{display:inline-block;padding:11px 28px;background:var(--accent);color:var(--bg);font-family:var(--font-display);font-size:13px;font-weight:700;letter-spacing:1px;text-decoration:none;text-transform:uppercase}
+  footer{border-top:1px solid var(--border);padding:28px 0;text-align:center;color:var(--muted);font-size:10px;margin-top:60px}
+</style>
+</head>
+<body>
+<div class="container">
+  <nav><div class="nav-inner">
+    <a href="/" class="nav-logo"><div class="nav-logo-icon">⬡</div><div class="nav-logo-text">Audit<span>AI</span></div></a>
+    <a href="/app.html" class="nav-cta">Free Audit →</a>
+  </div></nav>
+  <article>
+    <div class="article-tag">Best Practices</div>
+    <h1 class="article-title">The Smart Contract Security Checklist Every Developer Needs</h1>
+    <div class="article-meta"><span>10 min read</span><span>All Levels</span><span>Updated 2025</span></div>
+
+    <p>Before deploying any smart contract to mainnet, run through this checklist. These are the 20 most critical security checks based on real-world exploits that have cost the industry billions of dollars.</p>
+
+    <div class="severity-row">
+      <span class="sev-badge critical">Critical — Contract draining risk</span>
+      <span class="sev-badge high">High — Significant fund risk</span>
+      <span class="sev-badge medium">Medium — Logic/access issues</span>
+    </div>
+
+    <h2>Access Control</h2>
+    <div class="checklist">
+      <div class="check-item critical"><div class="check-box">✓</div><div class="check-content"><div class="check-title">Use msg.sender not tx.origin for authentication</div><div class="check-desc">tx.origin is vulnerable to phishing attacks. Always use msg.sender for access control checks.</div></div></div>
+      <div class="check-item critical"><div class="check-box">✓</div><div class="check-content"><div class="check-title">All sensitive functions have access modifiers</div><div class="check-desc">Every function that modifies state or moves funds must have onlyOwner, onlyRole, or equivalent protection.</div></div></div>
+      <div class="check-item high"><div class="check-box">✓</div><div class="check-content"><div class="check-title">Ownership transfer checks for zero address</div><div class="check-desc">transferOwnership() must require(newOwner != address(0)) to prevent accidentally burning ownership.</div></div></div>
+      <div class="check-item high"><div class="check-box">✓</div><div class="check-content"><div class="check-title">Consider using 2-step ownership transfer</div><div class="check-desc">Use a pending owner pattern where the new owner must accept before the transfer completes.</div></div></div>
+    </div>
+
+    <h2>Reentrancy</h2>
+    <div class="checklist">
+      <div class="check-item critical"><div class="check-box">✓</div><div class="check-content"><div class="check-title">Follow Checks-Effects-Interactions pattern</div><div class="check-desc">Always update state variables BEFORE making external calls. Never send ETH before zeroing balances.</div></div></div>
+      <div class="check-item critical"><div class="check-box">✓</div><div class="check-content"><div class="check-title">Use ReentrancyGuard on ETH-sending functions</div><div class="check-desc">Add OpenZeppelin's nonReentrant modifier to all functions that send ETH or call external contracts.</div></div></div>
+    </div>
+
+    <h2>Arithmetic</h2>
+    <div class="checklist">
+      <div class="check-item critical"><div class="check-box">✓</div><div class="check-content"><div class="check-title">Use Solidity 0.8+ or SafeMath for arithmetic</div><div class="check-desc">Solidity 0.8+ has built-in overflow protection. For older versions, use OpenZeppelin's SafeMath library.</div></div></div>
+      <div class="check-item high"><div class="check-box">✓</div><div class="check-content"><div class="check-title">Check for division by zero</div><div class="check-desc">Any division operation where the divisor could be zero must be guarded with a require() check.</div></div></div>
+      <div class="check-item high"><div class="check-box">✓</div><div class="check-content"><div class="check-title">Be careful with multiplication before division</div><div class="check-desc">Always multiply before dividing to avoid precision loss. E.g. (a * b) / c not a / c * b.</div></div></div>
+    </div>
+
+    <h2>External Calls</h2>
+    <div class="checklist">
+      <div class="check-item critical"><div class="check-box">✓</div><div class="check-content"><div class="check-title">Check return values of external calls</div><div class="check-desc">Always check the return value of low-level calls. Unchecked failures are a common vulnerability.</div></div></div>
+      <div class="check-item high"><div class="check-box">✓</div><div class="check-content"><div class="check-title">Be cautious with delegatecall</div><div class="check-desc">delegatecall executes code in the context of your contract. Only delegatecall to trusted, audited contracts.</div></div></div>
+      <div class="check-item high"><div class="check-box">✓</div><div class="check-content"><div class="check-title">Avoid flash loan vulnerabilities</div><div class="check-desc">Don't rely on token balances for security checks. Use internal accounting instead of address(this).balance.</div></div></div>
+    </div>
+
+    <h2>Logic & State</h2>
+    <div class="checklist">
+      <div class="check-item critical"><div class="check-box">✓</div><div class="check-content"><div class="check-title">No selfdestruct unless absolutely necessary</div><div class="check-desc">selfdestruct is a rugpull vector. If needed, protect it with a timelock and multisig.</div></div></div>
+      <div class="check-item high"><div class="check-box">✓</div><div class="check-content"><div class="check-title">Don't use block.timestamp for critical logic</div><div class="check-desc">Miners can manipulate timestamps by a few seconds. Don't use it for randomness or tight deadlines.</div></div></div>
+      <div class="check-item high"><div class="check-box">✓</div><div class="check-content"><div class="check-title">Avoid on-chain randomness</div><div class="check-desc">block.hash and block.timestamp are predictable. Use Chainlink VRF for any randomness needs.</div></div></div>
+    </div>
+
+    <h2>Deployment & Config</h2>
+    <div class="checklist">
+      <div class="check-item high"><div class="check-box">✓</div><div class="check-content"><div class="check-title">Test on testnet first</div><div class="check-desc">Deploy and test thoroughly on Sepolia or Goerli before mainnet. Test all edge cases and failure modes.</div></div></div>
+      <div class="check-item high"><div class="check-box">✓</div><div class="check-content"><div class="check-title">Verify source code on Etherscan</div><div class="check-desc">Always verify your contract source code. Unverified contracts are red flags to users and auditors.</div></div></div>
+      <div class="check-item high"><div class="check-box">✓</div><div class="check-content"><div class="check-title">Run automated security analysis</div><div class="check-desc">Use tools like AuditAI, Slither, or MythX to automatically detect common vulnerabilities before deployment.</div></div></div>
+      <div class="check-item high"><div class="check-box">✓</div><div class="check-content"><div class="check-title">Consider a professional audit for high-value contracts</div><div class="check-desc">For contracts holding significant funds, a professional audit from a reputable firm is strongly recommended.</div></div></div>
+    </div>
+
+    <div class="audit-cta">
+      <div class="audit-cta-title">Run automated checks on your contract</div>
+      <div class="audit-cta-sub">AuditAI checks all of the above automatically in seconds. Free security audit for any Solidity contract.</div>
+      <a href="/app.html" class="audit-cta-btn">⬡ Run Free Audit</a>
+    </div>
+  </article>
+</div>
+<footer>AuditAI · <a href="/blog.html" style="color:var(--accent);text-decoration:none">← Back to Blog</a></footer>
+<script defer src="/_vercel/insights/script.js"></script>
+</body>
+</html>
