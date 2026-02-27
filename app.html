@@ -576,19 +576,55 @@ async function fetchContractFromAddress(){
   finally{btn.disabled=false;text.style.display='inline';loader.style.display='none';}
 }
 
-async function fetchTokenFromAddress(){
-  const addr=document.getElementById('tokenAddrInput').value.trim();
-  if(!addr||!addr.startsWith('0x')){showToast('Enter a valid 0x address');return;}
-  try{
-   const r = await fetch(`/api/etherscan?address=${addr}`);
-    const d=await r.json();
-    if(d.status==='1'&&d.result[0]?.SourceCode){
-      document.getElementById('tokenCode').value=d.result[0].SourceCode;
-      showToast('Token contract fetched!');
-    }else{showToast('Contract not verified on Etherscan');}
-  }catch(e){showToast('Fetch failed: '+e.message);}
-}
+async function fetchContractFromAddress() {
+  const addr = document.getElementById('addrInput').value.trim();
+  if (!addr || !addr.startsWith('0x')) { showToast('Enter a valid 0x address'); return; }
+  const btn = document.getElementById('fetchAddrBtn');
+  const text = document.getElementById('fetchBtnText');
+  const loader = document.getElementById('fetchLoader');
+  btn.disabled = true; text.style.display = 'none'; loader.style.display = 'flex';
+  try {
+    const r = await fetch(`/api/etherscan?address=${addr}`);
+    const d = await r.json();
 
+    console.log('Etherscan response:', d); // debug
+
+    if (!d.result || d.result.length === 0) {
+      showToast('No result from Etherscan'); return;
+    }
+
+    const sourceCode = d.result[0].SourceCode;
+
+    if (!sourceCode || sourceCode === '') {
+      showToast('Contract not verified on Etherscan — no source code available');
+      return;
+    }
+
+    // Handle multi-file contracts (wrapped in {{ }})
+    let finalCode = sourceCode;
+    if (sourceCode.startsWith('{{')) {
+      try {
+        const parsed = JSON.parse(sourceCode.slice(1, -1));
+        finalCode = Object.values(parsed.sources)
+          .map(s => s.content)
+          .join('\n\n');
+      } catch {
+        finalCode = sourceCode;
+      }
+    }
+
+    document.getElementById('auditCode').value = finalCode;
+    showToast('✓ Contract fetched! Ready to audit.');
+
+  } catch (e) {
+    showToast('Fetch error: ' + e.message);
+    console.error(e);
+  } finally {
+    btn.disabled = false;
+    text.style.display = 'inline';
+    loader.style.display = 'none';
+  }
+}
 // ─── AI Call ─────────────────────────────────────────
 async function callAI(prompt){
   const r=await fetch('/api/audit',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt})});
