@@ -562,8 +562,7 @@ async function fetchContractFromAddress(){
   const loader=document.getElementById('fetchLoader');
   btn.disabled=true;text.style.display='none';loader.style.display='flex';
   try{
-    const url = `https://api.etherscan.io/api?module=contract&action=getsourcecode&address=${addr}&apikey=6CRKHKJ3XSK91RAWDEAJ921HHC1NHW4H6Z`;
-    const r=await fetch(url);
+   const r = await fetch(`/api/etherscan?address=${addr}`);
     const d=await r.json();
     if(d.status==='1'&&d.result[0]&&d.result[0].SourceCode){
       let src=d.result[0].SourceCode;
@@ -581,8 +580,8 @@ async function fetchTokenFromAddress(){
   const addr=document.getElementById('tokenAddrInput').value.trim();
   if(!addr||!addr.startsWith('0x')){showToast('Enter a valid 0x address');return;}
   try{
-   const url = `https://api.etherscan.io/api?module=contract&action=getsourcecode&address=${addr}&apikey=6CRKHKJ3XSK91RAWDEAJ921HHC1NHW4H6Z`;
-    const r=await fetch(url);const d=await r.json();
+   const r = await fetch(`/api/etherscan?address=${addr}`);
+    const d=await r.json();
     if(d.status==='1'&&d.result[0]?.SourceCode){
       document.getElementById('tokenCode').value=d.result[0].SourceCode;
       showToast('Token contract fetched!');
