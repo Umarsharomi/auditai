@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
-<script>emailjs.init('_49YiLuPF89e2DOxH');</script>
+<script>emailjs.init('r_pXgkfgPYYzSaHtd');</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>AuditAI App — Smart Contract Security Platform</title>
@@ -694,7 +694,7 @@ async function sendEmailReport(){
         issues:     lastAudit.findings.length,
         share_link: document.getElementById('auditShareLink').value
       },
-      '_49YiLuPF89e2DOxH'       // ← paste your Public Key
+      'r_pXgkfgPYYzSaHtd'       // ← paste your Public Key
     );
     document.getElementById('emailStatus').textContent = '✓ Report sent!';
     document.getElementById('emailStatus').style.color = 'var(--accent)';
