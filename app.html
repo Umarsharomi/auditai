@@ -684,8 +684,8 @@ async function sendEmailReport(){
   document.getElementById('emailStatus').textContent = '';
   try {
     await emailjs.send(
-      'YOUR_SERVICE_ID',      // ← paste your Service ID
-      'YOUR_TEMPLATE_ID',     // ← paste your Template ID
+      'service_2yq4dan',      // ← paste your Service ID
+      'template_ufmhhik',     // ← paste your Template ID
       {
         to_email:   email,
         score:      lastAudit.score,
@@ -694,7 +694,7 @@ async function sendEmailReport(){
         issues:     lastAudit.findings.length,
         share_link: document.getElementById('auditShareLink').value
       },
-      'YOUR_PUBLIC_KEY'       // ← paste your Public Key
+      '_49YiLuPF89e2DOxH'       // ← paste your Public Key
     );
     document.getElementById('emailStatus').textContent = '✓ Report sent!';
     document.getElementById('emailStatus').style.color = 'var(--accent)';
