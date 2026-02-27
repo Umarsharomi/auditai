@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Reentrancy Attack Explained — AuditAI Blog</title>
+<meta name="description" content="Learn how reentrancy attacks work, how the $60M DAO hack happened, and how to protect your Solidity contracts with ReentrancyGuard.">
+<meta name="keywords" content="reentrancy attack, smart contract security, solidity vulnerability, DAO hack, ReentrancyGuard">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap');
+  :root{--bg:#050A0E;--surface:#0C1419;--surface2:#111D24;--border:#1A2A35;--accent:#00FF88;--accent2:#00C4FF;--danger:#FF4560;--text:#E0EEF5;--muted:#4A6070;--font-display:'Syne',sans-serif;--font-mono:'Space Mono',monospace}
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:var(--bg);color:var(--text);font-family:var(--font-mono);overflow-x:hidden;line-height:1.8}
+  body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(0,255,136,0.02) 1px,transparent 1px),linear-gradient(90deg,rgba(0,255,136,0.02) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0}
+  .container{max-width:720px;margin:0 auto;padding:0 24px;position:relative;z-index:1}
+  nav{padding:20px 0;border-bottom:1px solid var(--border);margin-bottom:48px}
+  .nav-inner{display:flex;align-items:center;justify-content:space-between}
+  .nav-logo{display:flex;align-items:center;gap:10px;text-decoration:none}
+  .nav-logo-icon{width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-size:13px;color:var(--accent);clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%);background:rgba(0,255,136,0.08);border:1px solid rgba(0,255,136,0.3)}
+  .nav-logo-text{font-family:var(--font-display);font-size:17px;font-weight:800;color:var(--text)}
+  .nav-logo-text span{color:var(--accent)}
+  .nav-cta{padding:6px 14px;background:var(--accent);color:var(--bg);font-family:var(--font-mono);font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;text-decoration:none}
+  .article-tag{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--accent);margin-bottom:14px}
+  .article-title{font-family:var(--font-display);font-size:clamp(26px,5vw,42px);font-weight:800;letter-spacing:-1px;line-height:1.1;margin-bottom:16px}
+  .article-meta{display:flex;gap:16px;font-size:10px;color:var(--muted);margin-bottom:40px;padding-bottom:24px;border-bottom:1px solid var(--border)}
+  .article-body h2{font-family:var(--font-display);font-size:22px;font-weight:700;margin:40px 0 16px;color:var(--accent)}
+  .article-body p{font-size:13px;color:var(--muted);line-height:1.9;margin-bottom:16px}
+  .article-body strong{color:var(--text)}
+  .code-block{background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--accent2);padding:20px;margin:20px 0;font-size:12px;color:var(--accent2);overflow-x:auto;white-space:pre}
+  .code-block.bad{border-left-color:var(--danger);color:var(--danger)}
+  .code-block.good{border-left-color:var(--accent);color:var(--accent)}
+  .code-label{font-size:9px;letter-spacing:2px;text-transform:uppercase;margin-bottom:8px}
+  .code-label.bad{color:var(--danger)}
+  .code-label.good{color:var(--accent)}
+  .callout{background:var(--surface2);border:1px solid var(--border);border-left:3px solid var(--warn);padding:16px 20px;margin:20px 0;font-size:12px;color:var(--text);line-height:1.8}
+  .callout strong{color:var(--warn)}
+  .audit-cta{background:var(--surface);border:1px solid var(--accent);padding:28px;text-align:center;margin:48px 0}
+  .audit-cta-title{font-family:var(--font-display);font-size:20px;font-weight:700;margin-bottom:8px}
+  .audit-cta-sub{color:var(--muted);font-size:12px;margin-bottom:20px;line-height:1.8}
+  .audit-cta-btn{display:inline-block;padding:11px 28px;background:var(--accent);color:var(--bg);font-family:var(--font-display);font-size:13px;font-weight:700;letter-spacing:1px;text-decoration:none;text-transform:uppercase}
+  footer{border-top:1px solid var(--border);padding:28px 0;text-align:center;color:var(--muted);font-size:10px;letter-spacing:1px;margin-top:60px}
+</style>
+</head>
+<body>
+<div class="container">
+  <nav><div class="nav-inner">
+    <a href="/" class="nav-logo"><div class="nav-logo-icon">⬡</div><div class="nav-logo-text">Audit<span>AI</span></div></a>
+    <a href="/app.html" class="nav-cta">Free Audit Tool →</a>
+  </div></nav>
+
+  <article>
+    <div class="article-tag">Attack Vectors</div>
+    <h1 class="article-title">The Reentrancy Attack: How the $60M DAO Hack Happened</h1>
+    <div class="article-meta">
+      <span>5 min read</span><span>Beginner</span><span>Updated 2025</span>
+    </div>
+
+    <div class="article-body">
+      <p>In June 2016, an attacker exploited a reentrancy vulnerability in The DAO — one of the first major Ethereum DAOs — and drained <strong>3.6 million ETH worth $60 million</strong> at the time. This single hack led to the Ethereum hard fork that created Ethereum Classic.</p>
+      <p>Eight years later, reentrancy attacks are still one of the most common smart contract vulnerabilities. Let's break down exactly how they work.</p>
+
+      <h2>What is a Reentrancy Attack?</h2>
+      <p>A reentrancy attack happens when a malicious contract calls back into the victim contract <strong>before the first execution finishes</strong>. If the victim contract sends ETH to an external address before updating its state, the attacker can re-enter the function and drain funds repeatedly.</p>
+      <p>Think of it like a bank ATM bug — you withdraw $100, and before your balance updates, you withdraw another $100, and another, until the ATM is empty.</p>
+
+      <h2>The Vulnerable Pattern</h2>
+      <div class="code-label bad">❌ Vulnerable Code</div>
+      <div class="code-block bad">function withdraw() public {
+    uint256 amount = balances[msg.sender];
+    require(amount > 0, "No balance");
+
+    // DANGER: External call BEFORE state update
+    (bool success, ) = msg.sender.call{value: amount}("");
+    require(success);
+
+    balances[msg.sender] = 0; // Too late! Attacker already re-entered
+}</div>
+
+      <p>When <code>msg.sender.call</code> is executed, if <code>msg.sender</code> is a malicious contract, its <code>receive()</code> or <code>fallback()</code> function runs. That function calls <code>withdraw()</code> again — and since <code>balances[msg.sender]</code> hasn't been set to 0 yet, it passes the check and drains more funds.</p>
+
+      <h2>The Attack Contract</h2>
+      <div class="code-label bad">❌ Attacker Contract</div>
+      <div class="code-block bad">contract Attacker {
+    VulnerableBank public target;
+
+    constructor(address _target) {
+        target = VulnerableBank(_target);
+    }
+
+    function attack() public payable {
+        target.deposit{value: msg.value}();
+        target.withdraw();
+    }
+
+    // Called every time ETH is received
+    receive() external payable {
+        if (address(target).balance > 0) {
+            target.withdraw(); // Re-enter!
+        }
+    }
+}</div>
+
+      <div class="callout"><strong>⚠️ How it plays out:</strong> Attacker deposits 1 ETH → calls withdraw() → contract sends 1 ETH → attacker's receive() fires → calls withdraw() again → contract sends another 1 ETH (balance still shows 1!) → repeats until contract is empty.</div>
+
+      <h2>The Fix: Checks-Effects-Interactions Pattern</h2>
+      <p>The golden rule: <strong>always update state BEFORE making external calls.</strong> This is called the Checks-Effects-Interactions (CEI) pattern.</p>
+
+      <div class="code-label good">✅ Fixed Code (CEI Pattern)</div>
+      <div class="code-block good">function withdraw() public {
+    uint256 amount = balances[msg.sender];
+    require(amount > 0, "No balance");
+
+    // SAFE: Update state FIRST
+    balances[msg.sender] = 0;
+
+    // Then make the external call
+    (bool success, ) = msg.sender.call{value: amount}("");
+    require(success, "Transfer failed");
+}</div>
+
+      <h2>Extra Protection: ReentrancyGuard</h2>
+      <p>For extra safety, use OpenZeppelin's <strong>ReentrancyGuard</strong>. It adds a mutex lock that prevents re-entering any function marked with <code>nonReentrant</code>.</p>
+
+      <div class="code-label good">✅ Using ReentrancyGuard</div>
+      <div class="code-block good">import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+
+contract SafeBank is ReentrancyGuard {
+    mapping(address => uint256) public balances;
+
+    function withdraw() public nonReentrant {
+        uint256 amount = balances[msg.sender];
+        require(amount > 0, "No balance");
+        balances[msg.sender] = 0;
+        (bool success, ) = msg.sender.call{value: amount}("");
+        require(success);
+    }
+}</div>
+
+      <h2>Quick Checklist</h2>
+      <p>Before deploying any contract that sends ETH, ask yourself:</p>
+      <p>✅ Do I update state BEFORE external calls?<br>
+      ✅ Do I use ReentrancyGuard on sensitive functions?<br>
+      ✅ Have I tested with a malicious contract that re-enters?<br>
+      ✅ Did I run an automated audit?</p>
+
+      <div class="audit-cta">
+        <div class="audit-cta-title">Check your contract for reentrancy now</div>
+        <div class="audit-cta-sub">AuditAI scans for reentrancy and 20+ other vulnerabilities instantly. Free forever.</div>
+        <a href="/app.html" class="audit-cta-btn">⬡ Run Free Audit</a>
+      </div>
+    </div>
+  </article>
+</div>
+<footer>AuditAI · Smart Contract Security Platform · <a href="/blog.html" style="color:var(--accent);text-decoration:none">← Back to Blog</a></footer>
+<script defer src="/_vercel/insights/script.js"></script>
+</body>
+</html>
