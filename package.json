@@ -1,0 +1,23 @@
+{
+  "name": "auditai",
+  "version": "0.3.0",
+  "description": "AI-powered smart contract security scanner for Solidity contracts",
+  "main": "index.html",
+  "scripts": {
+    "dev": "vercel dev",
+    "deploy": "vercel deploy"
+  },
+  "keywords": [
+    "smart-contract",
+    "security",
+    "audit",
+    "solidity",
+    "blockchain"
+  ],
+  "author": "Umar Sharomi",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Umarsharomi/auditai.git"
+  }
+}
